@@ -199,8 +199,152 @@ double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const
 //     return 0.0;
 // }
 
+int countVars(const Eigen::MatrixXd& omega) {
+    int count = 0;
+
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega(i, j) > 0.5) count++;
+        }
+    }
+
+    return count;
+}
+
+// int countVars(const Eigen::SparseMatrix<double>& omega) {
+//     int count = 0;
+//
+//     for (int i = 0; i < omega.rows(); i++) {
+//         for (int j = 0; j < omega.cols(); j++) {
+//             if (omega(i, j) > 0.5) count++;
+//         }
+//     }
+//
+//     return count;
+// }
+
+int findIndex(const Eigen::MatrixXi& indexMap, int row, int col) {
+    for (int i = 0; i < indexMap.rows(); i++) {
+        if (indexMap(i, 0) == row && indexMap(i, 1) == col) return i;
+    }
+
+    cout << "ERROR: INDEX NOT FOUND" << endl;
+
+    return -1;
+}
+
 Eigen::VectorXd solveMissingPoints(const Eigen::MatrixXd& oldImg, const Eigen::MatrixXd& newImg, const Eigen::MatrixXd& boundary, const Eigen::MatrixXd& omega) {
+    int vars = countVars(omega);
+
+    cout << endl;
+
+    cout << "NUMBER OF VARS: " << vars << endl;
+
     Eigen::VectorXd x;
+    x.resize(vars);
+    x.setZero();
+
+    Eigen::VectorXd b;
+    b.resize(vars);
+    b.setZero();
+
+    Eigen::MatrixXi indexMap;
+    indexMap.resize(vars, 2);
+    indexMap.setZero();
+
+    int varIndex = 0;
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega(i, j) > 0.5) {
+                indexMap(varIndex, 0) = i;
+                indexMap(varIndex, 1) = j;
+                x(i) = newImg(i, j);
+                varIndex++;
+            }
+        }
+    }
+
+    Eigen::MatrixXd A;
+    A.resize(vars, vars);
+    A.setZero();
+
+    for (int i = 0; i < indexMap.rows(); i++) {
+        int row = indexMap(i, 0);
+        int col = indexMap(i, 1);
+
+        A(i, i) = 8.0;
+
+        if (omega(row, col + 1) > 0.5) {
+            int index = findIndex(indexMap, row, col + 1);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary(row, col + 1) > 0.5) {
+                b(i) -= 2.0 * oldImg(row, col + 1);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega(row, col - 1) > 0.5) {
+            int index = findIndex(indexMap, row, col - 1);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary(row, col - 1) > 0.5) {
+                b(i) -= 2.0 * oldImg(row, col - 1);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega(row - 1, col) > 0.5) {
+            int index = findIndex(indexMap, row - 1, col);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary(row - 1, col) > 0.5) {
+                b(i) -= 2.0 * oldImg(row - 1, col);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega(row + 1, col) > 0.5) {
+            int index = findIndex(indexMap, row + 1, col);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary(row + 1, col) > 0.5) {
+                b(i) -= 2.0 * oldImg(row + 1, col);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        b(i) += calculateSumOfGradiant(row, col, oldImg, newImg, boundary, omega);
+    }
+
+    cout << "A: " << endl << A << endl;
+
+    cout << "b: " << endl << b << endl;
+    cout << "-b: " << endl << -b << endl;
+
+
+    Eigen::BiCGSTAB<Eigen::MatrixXd > solver;
+    solver.compute(A);
+    x = solver.solve(-b);
+    std::cout << "#iterations:     " << solver.iterations() << std::endl;
+    std::cout << "estimated error: " << solver.error()      << std::endl;
+
+    cout << "X: " << endl << x << endl;
+
+
+    // varIndex = 0;
+    // for (int i = 0; i < omega.rows(); i++) {
+    //     for (int j = 0; j < omega.cols(); j++) {
+    //         if (omega(i, j) > 0.5) {
+    //             A(varIndex, varIndex) = 8.0;
+    //             if (omega())
+    //         }
+    //     }
+    // }
 
     // TODO
 
@@ -302,7 +446,7 @@ void twodExample() {
 
     // cout << endl << replaceMap << endl;
 
-    VectorXd points = solveMissingPoints(imageB, imageA, boundary, omega);
+    Eigen::VectorXd points = solveMissingPoints(imageB, imageA, boundaryMap, replaceMap);
 }
 
 int main(int argc, char* argv[]) {
