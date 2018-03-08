@@ -84,16 +84,127 @@ void inClassExample() {
     // x = solver.solve(b); // solve again
 }
 
-Eigen::MatrixXd calculateBoundaryMap(Eigen::MatrixXd map) {
+double smartAccess(int row, int col, const Eigen::MatrixXd& map) {
+    if (row >= map.rows() || row < 0) return 0.0;
+    if (col >= map.cols() || col < 0) return 0.0;
+    return map(row, col);
+}
+
+Eigen::MatrixXd calculateBoundaryMap(const Eigen::MatrixXd& map) {
     Eigen::MatrixXd boundary;
-    // TODO
+    boundary.resize(map.rows(), map.cols());
+    boundary.setZero();
+
+    for (int i = 0; i < map.rows(); i++) {
+        for (int j = 0; j < map.cols(); j++) {
+            if (map(i, j) == 0.0) {
+                if (smartAccess(i+1, j, map) == 1.0) boundary(i, j) = 1.0;
+                if (smartAccess(i-1, j, map) == 1.0) boundary(i, j) = 1.0;
+                if (smartAccess(i, j+1, map) == 1.0) boundary(i, j) = 1.0;
+                if (smartAccess(i, j-1, map) == 1.0) boundary(i, j) = 1.0;
+            }
+        }
+    }
+
     return boundary;
 }
 
-Eigen::SparseMatrix<double> calculateBoundaryMap(Eigen::SparseMatrix<double> map) {
-    Eigen::SparseMatrix<double> boundary;
+// Eigen::SparseMatrix<double> calculateBoundaryMap(const& Eigen::SparseMatrix<double> map) {
+//     Eigen::SparseMatrix<double> boundary;
+//     // TODO
+//     return boundary;
+// }
+
+// Eigen::MatrixXd calculateGradiantMatrix(const Eigen::MatrixXd& map) {
+//     Eigen::MatrixXd grad;
+//     grad.resize(map.rows() - 1, map.cols() - 1);
+//     grad.setZero();
+//
+//     for (int i = 0; i < grad.rows(); i++) {
+//         for (int j = 0; j < grad.cols(); j++) {
+//             grad(i, j) = map()
+//         }
+//     }
+// }
+
+double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const Eigen::MatrixXd& newImg, const Eigen::MatrixXd& boundary, const Eigen::MatrixXd& omega) {
+    double sum = 0.0;
+
+    // cout << "OMEGA: " << endl << omega << endl;
+
+    if (smartAccess(i, j, omega) != 1.0) cout << "MAJOR ERROR: WHAT" << endl;
+    // cout << "POS: " << newImg(i, j) << endl;
+
+    // North Box
+    if (smartAccess(i - 1, j, boundary) == 1.0) {
+        // cout << "N: " << oldImg(i - 1, j) << endl;
+        sum -= 2.0 * (newImg(i, j) - oldImg(i - 1, j));
+    } else if (smartAccess(i - 1, j, omega) == 1.0) {
+        // cout << "N: " << newImg(i - 1, j) << endl;
+        sum -= 2.0 * (newImg(i, j) - newImg(i - 1, j));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
+    }
+
+    // cout << "SUM POST N: " << sum << endl;
+
+    // South Box
+    if (smartAccess(i + 1, j, boundary) == 1.0) {
+        // cout << "S: " << oldImg(i + 1, j) << endl;
+        sum += 2.0 * (oldImg(i + 1, j) - newImg(i, j));
+    } else if (smartAccess(i + 1, j, omega) == 1.0) {
+        // cout << "S: " << newImg(i + 1, j) << endl;
+        sum += 2.0 * (newImg(i + 1, j) - newImg(i, j));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
+    }
+
+    // cout << "SUM POST S: " << sum << endl;
+
+    // East Box
+    if (smartAccess(i, j + 1, boundary) == 1.0) {
+        // cout << "E: " << oldImg(i, j + 1) << endl;
+        sum += 2.0 * (oldImg(i, j + 1) - newImg(i, j));
+    } else if (smartAccess(i, j + 1, omega) == 1.0) {
+        // cout << "E: " << newImg(i, j + 1) << endl;
+        sum += 2.0 * (newImg(i, j + 1) - newImg(i, j));
+    } else {
+        // cout << "BOUNDARY: " << smartAccess(i, j + 1, boundary) << endl;
+        // cout << "OMEGA: " << smartAccess(i, j + 1, omega) << endl;
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS EAST" << endl;
+    }
+
+    // cout << "SUM POST E: " << sum << endl;
+
+    // West Box
+    if (smartAccess(i, j - 1, boundary) == 1.0) {
+        // cout << "W: " << oldImg(i, j - 1) << endl;
+        sum -= 2.0 * (newImg(i, j) - oldImg(i, j - 1));
+    } else if (smartAccess(i, j - 1, omega) == 1.0) {
+        // cout << "W: " << newImg(i, j - 1) << endl;
+        sum -= 2.0 * (newImg(i, j) - newImg(i, j + 1));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
+    }
+
+    // cout << "SUM POST W: " << sum << endl;
+
+    // cout << "POST: " << endl << omega << endl;
+
+    return sum;
+}
+
+// double calculateSumOfGradiant(int i, int j, const Eigen::SparseMatrix<double>& map) {
+//     // TODO
+//     return 0.0;
+// }
+
+Eigen::VectorXd solveMissingPoints(const Eigen::MatrixXd& oldImg, const Eigen::MatrixXd& newImg, const Eigen::MatrixXd& boundary, const Eigen::MatrixXd& omega) {
+    Eigen::VectorXd x;
+
     // TODO
-    return boundary;
+
+    return x;
 }
 
 void twodExample() {
@@ -124,7 +235,13 @@ void twodExample() {
     // 1 2 4 2 6 3 7
     // 9 8 5 7 4 2 3
 
-    
+    imageA << 5, 4, 1, 3, 1, 5, 3,
+              8, 9, 6, 7, 3, 2, 4,
+              3, 5, 1, 3, 1, 5, 6,
+              2, 3, 1, 5, 1, 7, 0,
+              3, 4, 2, 4, 5, 6, 9,
+              1, 2, 4, 2, 6, 3, 7,
+              9, 8, 5, 7, 4, 2, 3;
 
     // imageB:
     // 6 3 2 2 4 4 1
@@ -135,6 +252,14 @@ void twodExample() {
     // 1 4 3 8 3 3 4
     // 2 5 9 3 2 1 1
 
+    imageB << 6, 3, 2, 2, 4, 4, 1,
+              4, 6, 3, 1, 3, 5, 1,
+              3, 4, 7, 2, 5, 8, 2,
+              7, 7, 5, 3, 3, 3, 2,
+              8, 2, 8, 0, 6, 2, 9,
+              1, 4, 3, 8, 3, 3, 4,
+              2, 5, 9, 3, 2, 1, 1;
+
     // replace map:
     // 0 0 0 0 0 0 0
     // 0 0 0 0 0 0 0
@@ -144,14 +269,40 @@ void twodExample() {
     // 0 0 0 0 0 0 0
     // 0 0 0 0 0 0 0
 
+    replaceMap << 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 1, 1, 1, 0, 0,
+                  0, 0, 1, 1, 1, 0, 0,
+                  0, 0, 1, 1, 1, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0;
+
+    // cout << "REPLACE MAP: " << endl << replaceMap << endl;
+
     // boundary map:
     // 0 0 0 0 0 0 0
-    // 0 1 1 1 1 1 0
+    // 0 0 1 1 1 0 0
     // 0 1 0 0 0 1 0
     // 0 1 0 0 0 1 0
     // 0 1 0 0 0 1 0
-    // 0 1 1 1 1 1 0
+    // 0 0 1 1 1 0 0
     // 0 0 0 0 0 0 0
+
+    boundaryMap = calculateBoundaryMap(replaceMap);
+
+    cout << endl;
+
+    // cout << "Boundary: " << endl << boundaryMap << endl;
+    //
+    // cout << "REPLACE MAP: " << endl << replaceMap << endl;
+
+    cout << "Gradiant sum at (2,2): " << calculateSumOfGradiant(2, 2, imageB, imageA, boundaryMap, replaceMap) << endl;
+
+    // cout << "OMEGA (2, 3): " << replaceMap(0, 1) << endl;
+
+    // cout << endl << replaceMap << endl;
+
+    VectorXd points = solveMissingPoints(imageB, imageA, boundary, omega);
 }
 
 int main(int argc, char* argv[]) {
@@ -165,6 +316,8 @@ int main(int argc, char* argv[]) {
     std::cout << m << std::endl;
 
     inClassExample();
+
+    twodExample();
 
     return 0;
 }
