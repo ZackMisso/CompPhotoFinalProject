@@ -1,10 +1,4 @@
-#include <iostream>
-
-#include <Eigen/Dense>
-#include <Eigen/Core>
-#include <Eigen/Sparse>
-
-using namespace std;
+#include <poly/common.h>
 
 void inClassExample() {
     Eigen::VectorXd a;
@@ -138,9 +132,11 @@ double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const
     // North Box
     if (smartAccess(i - 1, j, boundary) == 1.0) {
         // cout << "N: " << oldImg(i - 1, j) << endl;
+        // cout << "N OLD" << endl;
         sum -= 2.0 * (newImg(i, j) - oldImg(i - 1, j));
     } else if (smartAccess(i - 1, j, omega) == 1.0) {
         // cout << "N: " << newImg(i - 1, j) << endl;
+        // cout << "N NEW" << endl;
         sum -= 2.0 * (newImg(i, j) - newImg(i - 1, j));
     } else {
         cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
@@ -151,9 +147,11 @@ double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const
     // South Box
     if (smartAccess(i + 1, j, boundary) == 1.0) {
         // cout << "S: " << oldImg(i + 1, j) << endl;
+        // cout << "S OLD" << endl;
         sum += 2.0 * (oldImg(i + 1, j) - newImg(i, j));
     } else if (smartAccess(i + 1, j, omega) == 1.0) {
         // cout << "S: " << newImg(i + 1, j) << endl;
+        // cout << "S NEW" << endl;
         sum += 2.0 * (newImg(i + 1, j) - newImg(i, j));
     } else {
         cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
@@ -164,9 +162,11 @@ double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const
     // East Box
     if (smartAccess(i, j + 1, boundary) == 1.0) {
         // cout << "E: " << oldImg(i, j + 1) << endl;
+        // cout << "E OLD" << endl;
         sum += 2.0 * (oldImg(i, j + 1) - newImg(i, j));
     } else if (smartAccess(i, j + 1, omega) == 1.0) {
         // cout << "E: " << newImg(i, j + 1) << endl;
+        // cout << "E NEW" << endl;
         sum += 2.0 * (newImg(i, j + 1) - newImg(i, j));
     } else {
         // cout << "BOUNDARY: " << smartAccess(i, j + 1, boundary) << endl;
@@ -179,10 +179,12 @@ double calculateSumOfGradiant(int i, int j, const Eigen::MatrixXd& oldImg, const
     // West Box
     if (smartAccess(i, j - 1, boundary) == 1.0) {
         // cout << "W: " << oldImg(i, j - 1) << endl;
+        // cout << "W OLD" << endl;
         sum -= 2.0 * (newImg(i, j) - oldImg(i, j - 1));
     } else if (smartAccess(i, j - 1, omega) == 1.0) {
         // cout << "W: " << newImg(i, j - 1) << endl;
-        sum -= 2.0 * (newImg(i, j) - newImg(i, j + 1));
+        // cout << "W NEW" << endl;
+        sum -= 2.0 * (newImg(i, j) - newImg(i, j - 1));
     } else {
         cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
     }
@@ -264,6 +266,8 @@ Eigen::VectorXd solveMissingPoints(const Eigen::MatrixXd& oldImg, const Eigen::M
         }
     }
 
+    cout << "INDEX MAP: " << endl << indexMap << endl;
+
     Eigen::MatrixXd A;
     A.resize(vars, vars);
     A.setZero();
@@ -335,6 +339,13 @@ Eigen::VectorXd solveMissingPoints(const Eigen::MatrixXd& oldImg, const Eigen::M
 
     cout << "X: " << endl << x << endl;
 
+    // double test = calculateSumOfGradiant(2, 3, oldImg, newImg, boundary, omega);
+
+    // cout << "OMEGA:" << endl << omega << endl;
+    // cout << "BOUNDARY:" << endl << boundary << endl;
+    //
+    // cout << "GRAD (2, 3): " << test << endl;
+
 
     // varIndex = 0;
     // for (int i = 0; i < omega.rows(); i++) {
@@ -379,13 +390,13 @@ void twodExample() {
     // 1 2 4 2 6 3 7
     // 9 8 5 7 4 2 3
 
-    imageA << 5, 4, 1, 3, 1, 5, 3,
-              8, 9, 6, 7, 3, 2, 4,
-              3, 5, 1, 3, 1, 5, 6,
-              2, 3, 1, 5, 1, 7, 0,
-              3, 4, 2, 4, 5, 6, 9,
-              1, 2, 4, 2, 6, 3, 7,
-              9, 8, 5, 7, 4, 2, 3;
+    imageA << 0.5, 0.4, 0.1, 0.3, 0.1, 0.5, 0.3,
+              0.8, 0.9, 0.6, 0.7, 0.3, 0.2, 0.4,
+              0.3, 0.5, 0.1, 0.3, 0.1, 0.5, 0.6,
+              0.2, 0.3, 0.1, 0.5, 0.1, 0.7, 0.0,
+              0.3, 0.4, 0.2, 0.4, 0.5, 0.6, 0.9,
+              0.1, 0.2, 0.4, 0.2, 0.6, 0.3, 0.7,
+              0.9, 0.8, 0.5, 0.7, 0.4, 0.2, 0.3;
 
     // imageB:
     // 6 3 2 2 4 4 1
@@ -396,13 +407,13 @@ void twodExample() {
     // 1 4 3 8 3 3 4
     // 2 5 9 3 2 1 1
 
-    imageB << 6, 3, 2, 2, 4, 4, 1,
-              4, 6, 3, 1, 3, 5, 1,
-              3, 4, 7, 2, 5, 8, 2,
-              7, 7, 5, 3, 3, 3, 2,
-              8, 2, 8, 0, 6, 2, 9,
-              1, 4, 3, 8, 3, 3, 4,
-              2, 5, 9, 3, 2, 1, 1;
+    imageB << 0.6, 0.3, 0.2, 0.2, 0.4, 0.4, 0.1,
+              0.4, 0.6, 0.3, 0.1, 0.3, 0.5, 0.1,
+              0.3, 0.4, 0.7, 0.2, 0.5, 0.8, 0.2,
+              0.7, 0.7, 0.5, 0.3, 0.3, 0.3, 0.2,
+              0.8, 0.2, 0.8, 0.0, 0.6, 0.2, 0.9,
+              0.1, 0.4, 0.3, 0.8, 0.3, 0.3, 0.4,
+              0.2, 0.5, 0.9, 0.3, 0.2, 0.1, 0.1;
 
     // replace map:
     // 0 0 0 0 0 0 0
@@ -416,8 +427,8 @@ void twodExample() {
     replaceMap << 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0,
                   0, 0, 1, 1, 1, 0, 0,
-                  0, 0, 1, 1, 1, 0, 0,
-                  0, 0, 1, 1, 1, 0, 0,
+                  0, 0, 1, 1, 0, 0, 0,
+                  0, 0, 1, 0, 1, 0, 0,
                   0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0;
 
@@ -436,9 +447,9 @@ void twodExample() {
 
     cout << endl;
 
-    // cout << "Boundary: " << endl << boundaryMap << endl;
-    //
-    // cout << "REPLACE MAP: " << endl << replaceMap << endl;
+    cout << "Boundary: " << endl << boundaryMap << endl;
+
+    cout << "REPLACE MAP: " << endl << replaceMap << endl;
 
     cout << "Gradiant sum at (2,2): " << calculateSumOfGradiant(2, 2, imageB, imageA, boundaryMap, replaceMap) << endl;
 
@@ -447,6 +458,14 @@ void twodExample() {
     // cout << endl << replaceMap << endl;
 
     Eigen::VectorXd points = solveMissingPoints(imageB, imageA, boundaryMap, replaceMap);
+}
+
+void polarBearExample() {
+    // TODO
+}
+
+void testImageWrite() {
+    // TODO
 }
 
 int main(int argc, char* argv[]) {
@@ -462,6 +481,8 @@ int main(int argc, char* argv[]) {
     inClassExample();
 
     twodExample();
+
+    polarBearExample();
 
     return 0;
 }
