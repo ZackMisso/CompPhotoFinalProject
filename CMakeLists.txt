@@ -8,6 +8,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/
                     ${PROJECT_SOURCE_DIR}/include/
                     ${PROJECT_SOURCE_DIR}/ext/
                     ${PROJECT_SOURCE_DIR}/ext/stb/
+                    ${PROJECT_SOURCE_DIR}/ext/eigen/
 )
 
 set(ext_stb_srcs
