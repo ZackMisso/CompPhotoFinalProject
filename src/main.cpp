@@ -84,6 +84,76 @@ void inClassExample() {
     // x = solver.solve(b); // solve again
 }
 
+Eigen::MatrixXd calculateBoundaryMap(Eigen::MatrixXd map) {
+    Eigen::MatrixXd boundary;
+    // TODO
+    return boundary;
+}
+
+Eigen::SparseMatrix<double> calculateBoundaryMap(Eigen::SparseMatrix<double> map) {
+    Eigen::SparseMatrix<double> boundary;
+    // TODO
+    return boundary;
+}
+
+void twodExample() {
+    Eigen::MatrixXd imageA;
+    Eigen::MatrixXd imageB;
+    Eigen::MatrixXd v;
+    Eigen::MatrixXd replaceMap;
+    Eigen::MatrixXd boundaryMap;
+
+    imageA.resize(7, 7);
+    imageB.resize(7, 7);
+    v.resize(6, 6);
+    replaceMap.resize(7, 7);
+    boundaryMap.resize(7, 7);
+
+    imageA.setZero();
+    imageB.setZero();
+    v.setZero();
+    replaceMap.setZero();
+    boundaryMap.setZero();
+
+    // imageA:
+    // 5 4 1 3 1 5 3
+    // 8 9 6 7 3 2 4
+    // 3 5 1 3 1 5 6
+    // 2 3 1 5 1 7 0
+    // 3 4 2 4 5 6 9
+    // 1 2 4 2 6 3 7
+    // 9 8 5 7 4 2 3
+
+    
+
+    // imageB:
+    // 6 3 2 2 4 4 1
+    // 4 6 3 1 3 5 1
+    // 3 4 7 2 5 8 2
+    // 7 7 5 3 3 3 2
+    // 8 2 8 0 6 2 9
+    // 1 4 3 8 3 3 4
+    // 2 5 9 3 2 1 1
+
+    // replace map:
+    // 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0
+    // 0 0 1 1 1 0 0
+    // 0 0 1 1 1 0 0
+    // 0 0 1 1 1 0 0
+    // 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0
+
+    // boundary map:
+    // 0 0 0 0 0 0 0
+    // 0 1 1 1 1 1 0
+    // 0 1 0 0 0 1 0
+    // 0 1 0 0 0 1 0
+    // 0 1 0 0 0 1 0
+    // 0 1 1 1 1 1 0
+    // 0 0 0 0 0 0 0
+}
+
 int main(int argc, char* argv[]) {
     std::cout << "PHOTO OF MY BINS" << std::endl;
 
