@@ -1,4 +1,5 @@
 #include <poly/common.h>
+#include <poly/floatimage.h>
 
 void inClassExample() {
     Eigen::VectorXd a;
@@ -465,7 +466,9 @@ void polarBearExample() {
 }
 
 void testImageWrite() {
-    // TODO
+    Image img(DATA_DIR "/input/lucario.jpg");
+
+    img.debugWrite();
 }
 
 int main(int argc, char* argv[]) {
@@ -483,6 +486,8 @@ int main(int argc, char* argv[]) {
     twodExample();
 
     polarBearExample();
+
+    testImageWrite();
 
     return 0;
 }
