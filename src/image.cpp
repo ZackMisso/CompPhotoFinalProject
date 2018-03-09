@@ -2,7 +2,7 @@
 //     This class's IO was taken from code written by Wojciech Jarosz
 //
 
-#include <poly/floatimage.h>
+#include <poly/image.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -65,6 +65,34 @@ double Image::smartAccess(int x, int y, int z) const {
     if (z == 2) return blue(y, x);
 
     return 0.0;
+}
+
+void Image::set(int x, int y, int z, double value) {
+    if (z >= 3 || z < 0) return;
+    if (x >= width || x < 0) return;
+    if (y >= height || y < 0) return;
+
+    if (z == 0) red(y, x) = value;
+    if (z == 1) green(y, x) = value;
+    if (z == 2) blue(y, x) = value;
+}
+
+void Image::setZero() {
+    red.setZero();
+    green.setZero();
+    blue.setZero();
+}
+
+void Image::printRed() {
+    cout << red << endl;
+}
+
+void Image::printBlue() {
+    cout << blue << endl;
+}
+
+void Image::printGreen() {
+    cout << green << endl;
 }
 
 bool Image::read(const std::string& filename) {
@@ -243,4 +271,12 @@ int Image::getHeight() const {
 
 int Image::getDepth() const {
     return depth;
+}
+
+int Image::cols() const {
+    return width;
+}
+
+int Image::rows() const {
+    return height;
 }

@@ -1,5 +1,5 @@
 #include <poly/common.h>
-#include <poly/floatimage.h>
+#include <poly/image.h>
 
 void inClassExample() {
     Eigen::VectorXd a;
@@ -461,7 +461,164 @@ void twodExample() {
     Eigen::VectorXd points = solveMissingPoints(imageB, imageA, boundaryMap, replaceMap);
 }
 
+void countVars(const Image& omega, int& red, int& green, int& blue) {
+    red = 0;
+    green = 0;
+    blue = 0;
+
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega.smartAccess(i, j, 0) > 0.5) red++;
+            if (omega.smartAccess(i, j, 1) > 0.5) green++;
+            if (omega.smartAccess(i, j, 2) > 0.5) blue++;
+        }
+    }
+}
+
+Image calculateBoundaryMap(const Image& omega) {
+    Image boundary(omega.cols(), omega.rows(), 3);
+    // boundary.resize(map.rows(), map.cols());
+    boundary.setZero();
+
+    for (int c = 0; c < 3; c++) {
+        for (int i = 0; i < omega.rows(); i++) {
+            for (int j = 0; j < omega.cols(); j++) {
+                if (omega.smartAccess(j, i, c) < 0.1) {
+                    if (omega.smartAccess(j, i+1, c) > 0.5) boundary.set(j, i, c, 1.0);
+                    if (omega.smartAccess(j, i-1, c) > 0.5) boundary.set(j, i, c, 1.0);
+                    if (omega.smartAccess(j+1, i, c) > 0.5) boundary.set(j, i, c, 1.0);
+                    if (omega.smartAccess(j-1, i, c) > 0.5) boundary.set(j, i, c, 1.0);
+                }
+            }
+        }
+    }
+
+    return boundary;
+}
+
+void calculateIndexMaps(const Image& omega, Eigen::MatrixXi& redIndexMap, Eigen::MatrixXi& greenIndexMap, Eigen::MatrixXi& blueIndexMap) {
+    redIndexMap.setZero();
+    greenIndexMap.setZero();
+    blueIndexMap.setZero();
+
+    // int varIndex = 0;
+    // for (int i = 0; i < omega.rows(); i++) {
+    //     for (int j = 0; j < omega.cols(); j++) {
+    //         if (omega(i, j) > 0.5) {
+    //             indexMap(varIndex, 0) = i;
+    //             indexMap(varIndex, 1) = j;
+    //             x(i) = newImg(i, j);
+    //             varIndex++;
+    //         }
+    //     }
+    // }
+
+    int redVarIndex = 0;
+    int greenVarIndex = 0;
+    int blueVarIndex = 0;
+
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega.smartAccess(j, i, 0) > 0.5) {
+                redIndexMap(redVarIndex, 0) = i;
+                redIndexMap(redVarIndex, 1) = j;
+                redVarIndex++;
+            }
+            if (omega.smartAccess(j, i, 1) > 0.5) {
+                greenIndexMap(greenVarIndex, 0) = i;
+                greenIndexMap(greenVarIndex, 1) = j;
+                greenVarIndex++;
+            }
+            if (omega.smartAccess(j, i, 2) > 0.5) {
+                blueIndexMap(blueVarIndex, 0) = i;
+                blueIndexMap(blueVarIndex, 1) = j;
+                blueVarIndex++;
+            }
+        }
+    }
+}
+
+void imageExample() {
+    cout << "Image Example" << endl;
+
+    Image imageA(DATA_DIR "/input/GradiantX.png");
+    Image imageB(DATA_DIR "/input/GradiantY.png");
+    Image omega(DATA_DIR "/input/GradiantReplace1.png");
+    Image boundary(omega.cols(), omega.rows(), 3);
+    Image results(omega.cols(), omega.rows(), 3);
+
+    boundary = calculateBoundaryMap(omega);
+    results.setZero();
+
+    cout << "OMEGA RED:" << endl;
+    omega.printRed();
+
+    cout << "BOUNDARY RED:" << endl;
+    boundary.printRed();
+
+    cout << "OMEGA Green:" << endl;
+    omega.printGreen();
+
+    cout << "BOUNDARY Green:" << endl;
+    boundary.printGreen();
+
+    cout << "OMEGA Blue:" << endl;
+    omega.printBlue();
+
+    cout << "BOUNDARY Blue:" << endl;
+    boundary.printBlue();
+
+    int redVars;
+    int greenVars;
+    int blueVars;
+
+    countVars(omega, redVars, greenVars, blueVars);
+
+    cout << "Red Count: " << redVars << endl;
+    cout << "Green Count: " << greenVars << endl;
+    cout << "Blue Count: " << blueVars << endl;
+
+    Eigen::MatrixXi redIndexMap;
+    Eigen::MatrixXi greenIndexMap;
+    Eigen::MatrixXi blueIndexMap;
+
+    redIndexMap.resize(redVars, 2);
+    greenIndexMap.resize(greenVars, 2);
+    blueIndexMap.resize(blueVars, 2);
+
+    calculateIndexMaps(omega, redIndexMap, greenIndexMap, blueIndexMap);
+
+    cout << "Red Index Map: " << endl << redIndexMap << endl;
+
+    Eigen::VectorXd redX;
+    Eigen::VectorXd greenX;
+    Eigen::VectorXd blueX;
+
+    redX.resize(redVars);
+    greenX.resize(greenVars);
+    blueX.resize(blueVars);
+
+    redX.setZero();
+    greenX.setZero();
+    blueX.setZero();
+
+    for (int i = 0; i < redVars; i++) {
+        redX(i) = omega.smartAccess(redIndexMap(i, 1), redIndexMap(i, 0), 0);
+    }
+
+    for (int i = 0; i < greenVars; i++) {
+        greenX(i) = omega.smartAccess(greenIndexMap(i, 1), greenIndexMap(i, 0), 1);
+    }
+
+    for (int i = 0; i < blueVars; i++) {
+        blueX(i) = omega.smartAccess(blueIndexMap(i, 1), blueIndexMap(i, 0), 2);
+    }
+
+    // TODO
+}
+
 void polarBearExample() {
+    cout << "Polar Bear Example" << endl;
     // TODO
 }
 
@@ -473,6 +630,8 @@ void testImageWrite() {
 
 int main(int argc, char* argv[]) {
     std::cout << "PHOTO OF MY BINS" << std::endl;
+
+    testImageWrite();
 
     Eigen::MatrixXd m(2,2);
     m(0,0) = 3;
@@ -487,7 +646,7 @@ int main(int argc, char* argv[]) {
 
     polarBearExample();
 
-    testImageWrite();
+    imageExample();
 
     return 0;
 }

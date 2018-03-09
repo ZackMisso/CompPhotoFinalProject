@@ -20,7 +20,7 @@ add_definitions(-DDATA_DIR=R\"\(${PROJECT_SOURCE_DIR}/data\)\")
 
 set(common_srcs
     include/poly/common.h
-    include/poly/floatimage.h
+    include/poly/image.h
     include/poly/utils.h
 )
 
@@ -39,11 +39,11 @@ set(poly_srcs
     ext/stb/stb_image.h
 
     include/poly/common.h
-    include/poly/floatimage.h
+    include/poly/image.h
     include/poly/utils.h
 
     src/main.cpp
-    src/floatimage.cpp
+    src/image.cpp
 )    # a5
 
 add_executable(poly ${poly_srcs})                                               # a5
