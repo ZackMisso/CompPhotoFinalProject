@@ -538,6 +538,118 @@ void calculateIndexMaps(const Image& omega, Eigen::MatrixXi& redIndexMap, Eigen:
     }
 }
 
+double calculateSumOfGradiant(int i, int j, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, int ch) {
+    double sum = 0.0;
+
+    // if (smartAccess(i, j, omega) != 1.0) cout << "MAJOR ERROR: WHAT" << endl;
+
+    if (omega.smartAccess(j, i, ch) != 1.0) cout << "MAJOR ERROR: WHAT" << endl;
+
+    // North Box
+    // if (smartAccess(i - 1, j, boundary) == 1.0) {
+    //     sum -= 2.0 * (newImg(i, j) - oldImg(i - 1, j));
+    // } else if (smartAccess(i - 1, j, omega) == 1.0) {
+    //     sum -= 2.0 * (newImg(i, j) - newImg(i - 1, j));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
+    // }
+
+    if (boundary.smartAccess(j, i - 1, ch) == 1.0) {
+        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j, i - 1, ch));
+    } else if (omega.smartAccess(j, i - 1, ch) == 1.0) {
+        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
+    }
+
+    // South Box
+    if (boundary.smartAccess(j, i + 1, ch) == 1.0) {
+        sum += 2.0 * (imageB.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
+    } else if (omega.smartAccess(j, i + 1, ch) == 1.0) {
+        sum += 2.0 * (imageA.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
+    }
+
+    // East Box
+    if (boundary.smartAccess(j + 1, i, ch) == 1.0) {
+        sum += 2.0 * (imageB.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
+    } else if (omega.smartAccess(j + 1, i, ch) == 1.0) {
+        sum += 2.0 * (imageA.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS EAST" << endl;
+    }
+
+    // West Box
+    if (boundary.smartAccess(j - 1, i, ch) == 1.0) {
+        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j - 1, i, ch));
+    } else if (omega.smartAccess(j - 1, i, ch) == 1.0) {
+        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
+    } else {
+        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
+    }
+
+    return sum;
+}
+
+void calculateHessianAndB(Eigen::MatrixXd& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, int ch) {
+    A.setZero();
+    b.setZero();
+
+    for (int i = 0; i < indexMap.rows(); i++) {
+        int row = indexMap(i, 0);
+        int col = indexMap(i, 1);
+
+        A(i, i) = 8.0;
+
+        if (omega.smartAccess(col + 1, row, ch) > 0.5) {
+            int index = findIndex(indexMap, row, col + 1);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary.smartAccess(col + 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col + 1, row, ch);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega.smartAccess(col - 1, row, ch) > 0.5) {
+            int index = findIndex(indexMap, row, col - 1);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary.smartAccess(col - 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col - 1, row, ch);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega.smartAccess(col, row - 1, ch) > 0.5) {
+            int index = findIndex(indexMap, row - 1, col);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary.smartAccess(col, row - 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row - 1, ch);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        if (omega.smartAccess(col, row + 1, ch) > 0.5) {
+            int index = findIndex(indexMap, row + 1, col);
+            A(i, index) += -2.0;
+        } else {
+            if (boundary.smartAccess(col, row + 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row + 1, ch);
+            } else {
+                cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+            }
+        }
+
+        b(i) += calculateSumOfGradiant(row, col, imageB, imageA, boundary, omega, ch);
+    }
+}
+
 void imageExample() {
     cout << "Image Example" << endl;
 
@@ -613,6 +725,50 @@ void imageExample() {
     for (int i = 0; i < blueVars; i++) {
         blueX(i) = omega.smartAccess(blueIndexMap(i, 1), blueIndexMap(i, 0), 2);
     }
+
+    Eigen::MatrixXd redA;
+    Eigen::MatrixXd greenA;
+    Eigen::MatrixXd blueA;
+
+    Eigen::VectorXd redB;
+    Eigen::VectorXd greenB;
+    Eigen::VectorXd blueB;
+
+    redA.resize(redVars, redVars);
+    greenA.resize(greenVars, greenVars);
+    blueA.resize(blueVars, blueVars);
+
+    redB.resize(redVars);
+    greenB.resize(greenVars);
+    blueB.resize(blueVars);
+
+    // const Eigen::MatrixXd& oldImg, const Eigen::MatrixXd& newImg, const Eigen::MatrixXd& boundary, const Eigen::MatrixXd& omega
+
+    calculateHessianAndB(redA, redB, redIndexMap, imageB, imageA, boundary, omega, 0);
+    calculateHessianAndB(greenA, greenB, greenIndexMap, imageB, imageA, boundary, omega, 1);
+    calculateHessianAndB(blueA, blueB, blueIndexMap, imageB, imageA, boundary, omega, 2);
+
+    // cout << "Red A:" << endl;
+    //
+    // cout << redA << endl;
+
+    Eigen::BiCGSTAB<Eigen::MatrixXd> redSolver;
+    Eigen::BiCGSTAB<Eigen::MatrixXd> greenSolver;
+    Eigen::BiCGSTAB<Eigen::MatrixXd> blueSolver;
+
+    redSolver.compute(redA);
+    greenSolver.compute(greenA);
+    blueSolver.compute(blueA);
+
+    redX = redSolvesr.solve(-redB);
+    greenX = greenSolver.solve(-greenB);
+    blueX = blueSolver.solve(-blueB);
+
+
+    cout << "X: " << endl << redX << endl;
+
+    std::cout << "#iterations:     " << redSolver.iterations() << std::endl;
+    std::cout << "estimated error: " << redSolver.error()      << std::endl;
 
     // TODO
 }
