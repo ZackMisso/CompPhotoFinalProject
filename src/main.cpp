@@ -1029,10 +1029,10 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
         double three = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col + 1, row, ch));
         double four = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col - 1, row, ch));
 
-        if (fabs(one) > edgeTh) b(i) -= 2.0 * one;
-        if (fabs(two) > edgeTh) b(i) -= 2.0 * two;
-        if (fabs(three) > edgeTh) b(i) -= 2.0 * three;
-        if (fabs(four) > edgeTh) b(i) -= 2.0 * four;
+        if (fabs(one) > edgeTh) b(i) -= one;
+        if (fabs(two) > edgeTh) b(i) -= two;
+        if (fabs(three) > edgeTh) b(i) -= three;
+        if (fabs(four) > edgeTh) b(i) -= four;
 
         // if (edge.smartAccess(col, row, ch) > 0.1) {
         //     b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row - 1, ch));
@@ -2245,29 +2245,29 @@ void toonShaderDemo() {
     // Image imageA(DATA_DIR "/input/girlTwo.jpg");
     Image omega(DATA_DIR "/input/fullFaceWeights.png");
 
-    Image edge = edgeDetection(imageA, 0.09);
+    // Image edge = edgeDetection(imageA, 0.09);
 
     Eigen::Vector2i offset;
     offset[0] = 0;
     offset[1] = 0;
 
-    edgeDetection(imageA, 0.03).write(DATA_DIR "/output/faceSwapED-0_03.png");
-    edgeDetection(imageA, 0.05).write(DATA_DIR "/output/faceSwapED-0_05.png");
-    edgeDetection(imageA, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
-    edgeDetection(imageA, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
-    edgeDetection(imageA, 0.3).write(DATA_DIR "/output/faceSwapED-0_3.png");
-    edgeDetection(imageA, 0.4).write(DATA_DIR "/output/faceSwapED-0_4.png");
-    edgeDetection(imageA, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
-    edgeDetection(imageA, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
-    edgeDetection(imageA, 0.7).write(DATA_DIR "/output/faceSwapED-0_7.png");
-    edgeDetection(imageA, 0.8).write(DATA_DIR "/output/faceSwapED-0_8.png");
-    edgeDetection(imageA, 0.9).write(DATA_DIR "/output/faceSwapED-0_9.png");
+    // edgeDetection(imageA, 0.03).write(DATA_DIR "/output/faceSwapED-0_03.png");
+    // edgeDetection(imageA, 0.05).write(DATA_DIR "/output/faceSwapED-0_05.png");
+    // edgeDetection(imageA, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
+    // edgeDetection(imageA, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
+    // edgeDetection(imageA, 0.3).write(DATA_DIR "/output/faceSwapED-0_3.png");
+    // edgeDetection(imageA, 0.4).write(DATA_DIR "/output/faceSwapED-0_4.png");
+    // edgeDetection(imageA, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
+    // edgeDetection(imageA, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
+    // edgeDetection(imageA, 0.7).write(DATA_DIR "/output/faceSwapED-0_7.png");
+    // edgeDetection(imageA, 0.8).write(DATA_DIR "/output/faceSwapED-0_8.png");
+    // edgeDetection(imageA, 0.9).write(DATA_DIR "/output/faceSwapED-0_9.png");
 
-    Image results = seamlessPoissonCloningToon(imageA, imageB, omega, edge, offset);
-    results.write(DATA_DIR "/output/faceWHOA.png");
-    results.setZero();
+    // Image results = seamlessPoissonCloningToon(imageA, imageB, omega, edge, offset);
+    // results.write(DATA_DIR "/output/faceWHOA.png");
+    // results.setZero();
 
-    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.1, offset);
+    Image results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.1, offset);
     results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_1.png");
     results.setZero();
 
@@ -2344,6 +2344,84 @@ void quickSparseMatrixVerify() {
     cout << endl;
 }
 
+void cellShadeTest() {
+    Image imageB(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageB2(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageB3(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageB4(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageB5(DATA_DIR "/output/faceSwapHealedRight.png");
+    imageB.cellShade(1.0 / 2.0);
+    imageB2.cellShade(1.0 / 5.0);
+    imageB3.cellShade(1.0 / 10.0);
+    imageB4.cellShade(1.0 / 15.0);
+    imageB5.cellShade(1.0 / 20.0);
+
+    imageB.write(DATA_DIR "/output/cellShadeExample_2.png");
+    imageB2.write(DATA_DIR "/output/cellShadeExample_5.png");
+    imageB3.write(DATA_DIR "/output/cellShadeExample_10.png");
+    imageB4.write(DATA_DIR "/output/cellShadeExample_15.png");
+    imageB5.write(DATA_DIR "/output/cellShadeExample_20.png");
+}
+
+void cellShadeDemo() {
+    Image imageB(DATA_DIR "/input/girlOne.jpg");
+    Image imageA(DATA_DIR "/input/girlTwo.jpg");
+    Image omega(DATA_DIR "/input/girlTwoWeights2.png");
+    Eigen::Vector2i offset;
+    offset[0] = 4;
+    offset[1] = 25;
+
+    imageA.cellShade(1.0 / 12.0);
+    // imageB.cellShade(1.0 / 12.0);
+
+    Image swap = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    swap.write(DATA_DIR "/output/cellShadeDemo.png");
+}
+
+void cellShadeDemo2() {
+    Image imageB(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageA(DATA_DIR "/output/faceSwapHealedRight.png");
+    // Image imageB(DATA_DIR "/input/girlTwo.jpg");
+    // Image imageA(DATA_DIR "/input/girlTwo.jpg");
+    Image omega(DATA_DIR "/input/fullFaceWeights.png");
+
+    // Image edge = edgeDetection(imageA, 0.09);
+
+    Eigen::Vector2i offset;
+    offset[0] = 0;
+    offset[1] = 0;
+
+    imageA.cellShade(1.0 / 5.0);
+
+    // edgeDetection(imageA, 0.03).write(DATA_DIR "/output/faceSwapED-0_03.png");
+    // edgeDetection(imageA, 0.05).write(DATA_DIR "/output/faceSwapED-0_05.png");
+    // edgeDetection(imageA, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
+    // edgeDetection(imageA, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
+    // edgeDetection(imageA, 0.3).write(DATA_DIR "/output/faceSwapED-0_3.png");
+    // edgeDetection(imageA, 0.4).write(DATA_DIR "/output/faceSwapED-0_4.png");
+    // edgeDetection(imageA, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
+    // edgeDetection(imageA, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
+    // edgeDetection(imageA, 0.7).write(DATA_DIR "/output/faceSwapED-0_7.png");
+    // edgeDetection(imageA, 0.8).write(DATA_DIR "/output/faceSwapED-0_8.png");
+    // edgeDetection(imageA, 0.9).write(DATA_DIR "/output/faceSwapED-0_9.png");
+
+    // Image results = seamlessPoissonCloningToon(imageA, imageB, omega, edge, offset);
+    // results.write(DATA_DIR "/output/faceWHOA.png");
+    // results.setZero();
+
+    Image results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.1, offset);
+    results.write(DATA_DIR "/output/cellGradTest_1_5.png");
+    results.setZero();
+
+    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.05, offset);
+    results.write(DATA_DIR "/output/cellGradTest_05_5.png");
+    results.setZero();
+
+    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.15, offset);
+    results.write(DATA_DIR "/output/cellGradTest_15_5.png");
+    results.setZero();
+}
+
 int main(int argc, char* argv[]) {
     // quickSparseMatrixVerify();
     //
@@ -2375,8 +2453,12 @@ int main(int argc, char* argv[]) {
     // sparseFoxDemo();
     // sparseFoxLogDemo();
 
-    sparseFaceSwapDemo();
-    toonShaderDemo();
+    // sparseFaceSwapDemo();
+    // toonShaderDemo();
+
+    // cellShadeTest();
+    cellShadeDemo();
+    cellShadeDemo2();
 
     return 0;
 }

@@ -20,6 +20,7 @@ public:
     void resize(int cols, int rows, int ch);
     void setZero();
 
+    void cellShade(double threshold);
     void toLog();
     void toLin();
     double minNonZero();

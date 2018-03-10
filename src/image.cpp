@@ -121,6 +121,18 @@ void Image::printGreen() {
     cout << green << endl;
 }
 
+void Image::cellShade(double threshold) {
+	for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+			for (int c = 0; c < 3; c++) {
+				double value = smartAccess(j, i, c);
+				int step = int(value / threshold);
+				set(j, i, c, (double)step * threshold);
+			}
+        }
+    }
+}
+
 void Image::toLog() {
     double minf = minNonZero();
 
