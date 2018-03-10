@@ -554,41 +554,87 @@ double calculateSumOfGradiant(int i, int j, const Image& imageB, const Image& im
     //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
     // }
 
-    if (boundary.smartAccess(j, i - 1, ch) == 1.0) {
-        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j, i - 1, ch));
-    } else if (omega.smartAccess(j, i - 1, ch) == 1.0) {
-        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
-    } else {
-        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
-    }
 
-    // South Box
-    if (boundary.smartAccess(j, i + 1, ch) == 1.0) {
-        sum += 2.0 * (imageB.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
-    } else if (omega.smartAccess(j, i + 1, ch) == 1.0) {
-        sum += 2.0 * (imageA.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
-    } else {
-        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
-    }
+    // // OLD
+    //
+    // if (boundary.smartAccess(j, i - 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j, i - 1, ch));
+    // } else if (omega.smartAccess(j, i - 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
+    // }
+    //
+    // // South Box
+    // if (boundary.smartAccess(j, i + 1, ch) == 1.0) {
+    //     sum += 2.0 * (imageB.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
+    // } else if (omega.smartAccess(j, i + 1, ch) == 1.0) {
+    //     sum += 2.0 * (imageA.smartAccess(j, i + 1, ch) - imageA.smartAccess(j, i, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
+    // }
+    //
+    // // East Box
+    // if (boundary.smartAccess(j + 1, i, ch) == 1.0) {
+    //     sum += 2.0 * (imageB.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
+    // } else if (omega.smartAccess(j + 1, i, ch) == 1.0) {
+    //     sum += 2.0 * (imageA.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS EAST" << endl;
+    // }
+    //
+    // // West Box
+    // if (boundary.smartAccess(j - 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j - 1, i, ch));
+    // } else if (omega.smartAccess(j - 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
+    // }
 
-    // East Box
-    if (boundary.smartAccess(j + 1, i, ch) == 1.0) {
-        sum += 2.0 * (imageB.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
-    } else if (omega.smartAccess(j + 1, i, ch) == 1.0) {
-        sum += 2.0 * (imageA.smartAccess(j + 1, i, ch) - imageA.smartAccess(j, i, ch));
-    } else {
-        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS EAST" << endl;
-    }
 
-    // West Box
-    if (boundary.smartAccess(j - 1, i, ch) == 1.0) {
-        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageB.smartAccess(j - 1, i, ch));
-    } else if (omega.smartAccess(j - 1, i, ch) == 1.0) {
-        sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
-    } else {
-        cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
-    }
+    // North Box
+    // if (boundary.smartAccess(j, i - 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
+    // } else if (omega.smartAccess(j, i - 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS NORTH" << endl;
+    // }
+    //
+    // // South Box
+    // if (boundary.smartAccess(j, i + 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i + 1, ch));
+    // } else if (omega.smartAccess(j, i + 1, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i + 1, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS SOUTH" << endl;
+    // }
+    //
+    // // East Box
+    // if (boundary.smartAccess(j + 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j + 1, i, ch));
+    // } else if (omega.smartAccess(j + 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j + 1, i, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS EAST" << endl;
+    // }
+    //
+    // // West Box
+    // if (boundary.smartAccess(j - 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
+    // } else if (omega.smartAccess(j - 1, i, ch) == 1.0) {
+    //     sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
+    // } else {
+    //     cout << "MAJOR ERROR: OUT OF EXPECTED BOUNDS WEST" << endl;
+    // }
 
+    sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i - 1, ch));
+    sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j, i + 1, ch));
+    sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j + 1, i, ch));
+    sum -= 2.0 * (imageA.smartAccess(j, i, ch) - imageA.smartAccess(j - 1, i, ch));
+
+    cout << "SUMMM: " << sum << endl;
     return sum;
 }
 
@@ -653,8 +699,10 @@ void calculateHessianAndB(Eigen::MatrixXd& A, Eigen::VectorXd& b, const Eigen::M
 void imageExample() {
     cout << "Image Example" << endl;
 
-    Image imageA(DATA_DIR "/input/GradiantX.png");
-    Image imageB(DATA_DIR "/input/GradiantY.png");
+    // Image imageA(DATA_DIR "/input/GradiantX.png");
+    // Image imageB(DATA_DIR "/input/GradiantY.png");
+    Image imageB(DATA_DIR "/input/GradiantX.png");
+    Image imageA(DATA_DIR "/input/GradiantY.png");
     Image omega(DATA_DIR "/input/GradiantReplace1.png");
     Image boundary(omega.cols(), omega.rows(), 3);
     Image results(omega.cols(), omega.rows(), 3);
@@ -760,7 +808,11 @@ void imageExample() {
     greenSolver.compute(greenA);
     blueSolver.compute(blueA);
 
-    redX = redSolvesr.solve(-redB);
+    redX.setZero();
+    greenX.setZero();
+    blueX.setZero();
+
+    redX = redSolver.solve(-redB);
     greenX = greenSolver.solve(-greenB);
     blueX = blueSolver.solve(-blueB);
 
@@ -770,7 +822,49 @@ void imageExample() {
     std::cout << "#iterations:     " << redSolver.iterations() << std::endl;
     std::cout << "estimated error: " << redSolver.error()      << std::endl;
 
-    // TODO
+    for (int c = 0; c < 3; c++) {
+        for (int i = 0; i < results.rows(); i++) {
+            for (int j = 0; j < results.cols(); j++) {
+                results.set(j, i, c, imageB.smartAccess(j, i, c));
+            }
+        }
+    }
+
+    for (int i = 0; i < redVars; i++) {
+        results.set(redIndexMap(i, 1), redIndexMap(i, 0), 0, redX(i));
+    }
+
+    for (int i = 0; i < greenVars; i++) {
+        results.set(greenIndexMap(i, 1), greenIndexMap(i, 0), 1, greenX(i));
+    }
+
+    for (int i = 0; i < blueVars; i++) {
+        results.set(blueIndexMap(i, 1), blueIndexMap(i, 0), 2, blueX(i));
+    }
+
+    results.write(DATA_DIR "/output/gradient1Test.png");
+
+    cout << "Grad Sum: " << calculateSumOfGradiant(10, 11, imageB, imageA, boundary, omega, 0) << endl;
+    cout << "P: " << imageA.smartAccess(11, 10, 0) << endl;
+    cout << "N: " << imageA.smartAccess(11, 9, 0) << endl;
+    cout << "S: " << imageA.smartAccess(11, 11, 0) << endl;
+    cout << "E: " << imageA.smartAccess(12, 10, 0) << endl;
+    cout << "W: " << imageA.smartAccess(10, 10, 0) << endl;
+
+    double P = imageA.smartAccess(11, 10, 0);
+    double N = imageA.smartAccess(11, 9, 0);
+    double S = imageA.smartAccess(11, 11, 0);
+    double E = imageA.smartAccess(12, 10, 0);
+    double W = imageA.smartAccess(10, 10, 0);
+
+    double BN = imageB.smartAccess(11, 9, 0);
+    double BW = imageB.smartAccess(10, 10, 0);
+
+    cout << "ACTUAL GRAD: " << -2.0 * (P - N) - 2.0 * (P - W) + 2.0 * (E - P) + 2.0 * (S - P) << endl;
+
+    cout << "B: " << redB(0) << endl;
+
+    cout << "ACTUAL B: " << -2.0 * (P - N) - 2.0 * (P - W) + 2.0 * (E - P) + 2.0 * (S - P) - 2.0 * BN - 2.0 * BW << endl;
 }
 
 void polarBearExample() {
