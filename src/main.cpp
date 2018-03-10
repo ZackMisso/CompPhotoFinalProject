@@ -862,6 +862,187 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
     }
 }
 
+void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexGrid, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, const Image& edge, const Eigen::Vector2i offset, int ch) {
+    b.setZero();
+
+    cout << "VARS: " << indexMap.rows() << endl;
+
+    for (int i = 0; i < indexMap.rows(); i++) {
+        int row = indexMap(i, 0);
+        int col = indexMap(i, 1);
+
+        A.insert(i, i) = 8.0;
+
+        // cout << "HERE" << endl;
+
+        if (omega.smartAccess(col + 1, row, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row, col + 1);
+            int index = indexGrid(row, col + 1);
+            // cout << index << endl;
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col + 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col + 1, row, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col - 1, row, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row, col - 1);
+            int index = indexGrid(row, col - 1);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col - 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col - 1, row, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col, row - 1, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row - 1, col);
+            int index = indexGrid(row - 1, col);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col, row - 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row - 1, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col, row + 1, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row + 1, col);
+            int index = indexGrid(row + 1, col);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col, row + 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row + 1, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (edge.smartAccess(col, row, ch) > 0.1) {
+            b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row - 1, ch));
+            b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row + 1, ch));
+            b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col + 1, row, ch));
+            b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col - 1, row, ch));
+        }
+    }
+}
+
+double absf(double val) {
+    if (val < 0) return -val;
+    return val;
+}
+
+void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexGrid, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, double edgeTh, const Eigen::Vector2i offset, int ch) {
+    b.setZero();
+
+    cout << "VARS: " << indexMap.rows() << endl;
+
+    for (int i = 0; i < indexMap.rows(); i++) {
+        int row = indexMap(i, 0);
+        int col = indexMap(i, 1);
+
+        A.insert(i, i) = 8.0;
+
+        // cout << "HERE" << endl;
+
+        if (omega.smartAccess(col + 1, row, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row, col + 1);
+            int index = indexGrid(row, col + 1);
+            // cout << index << endl;
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col + 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col + 1, row, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col - 1, row, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row, col - 1);
+            int index = indexGrid(row, col - 1);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col - 1, row, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col - 1, row, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col, row - 1, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row - 1, col);
+            int index = indexGrid(row - 1, col);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col, row - 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row - 1, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        if (omega.smartAccess(col, row + 1, ch) > 0.5) {
+            // int index = findIndexFast(indexMap, row + 1, col);
+            int index = indexGrid(row + 1, col);
+            A.insert(i, index) = -2.0;
+        } else {
+            if (boundary.smartAccess(col, row + 1, ch) > 0.5) {
+                b(i) -= 2.0 * imageB.smartAccess(col, row + 1, offset, ch);
+            } else {
+                if (row == 0 || col == 0 || row == imageB.rows() - 1 || col == imageB.cols() - 1) { }
+                else {
+                    cout << "MAJOR ERROR: NOT OMEGA OR BOUNDARY" << endl;
+                }
+            }
+        }
+
+        double one = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row - 1, ch));
+        double two = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row + 1, ch));
+        double three = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col + 1, row, ch));
+        double four = 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col - 1, row, ch));
+
+        if (fabs(one) > edgeTh) b(i) -= 2.0 * one;
+        if (fabs(two) > edgeTh) b(i) -= 2.0 * two;
+        if (fabs(three) > edgeTh) b(i) -= 2.0 * three;
+        if (fabs(four) > edgeTh) b(i) -= 2.0 * four;
+
+        // if (edge.smartAccess(col, row, ch) > 0.1) {
+        //     b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row - 1, ch));
+        //     b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col, row + 1, ch));
+        //     b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col + 1, row, ch));
+        //     b(i) -= 2.0 * (imageA.smartAccess(col, row, ch) - imageA.smartAccess(col - 1, row, ch));
+        // }
+    }
+}
+
 void calculateHessianAndBLog(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexGrid, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, const Eigen::Vector2i offset, int ch) {
     b.setZero();
 
@@ -1410,6 +1591,246 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     return results;
 }
 
+Image seamlessPoissonCloningToon(const Image& imageA, const Image& imageB, const Image& omega, const Image& edge, Eigen::Vector2i omegaOffset) {
+    Image results(imageB.cols(), imageB.rows(), 3);
+
+    for (int c = 0; c < 3; c++) {
+        for (int i = 0; i < results.rows(); i++) {
+            for (int j = 0; j < results.cols(); j++) {
+                results.set(j, i, c, imageB.smartAccess(j, i, c));
+            }
+        }
+    }
+
+    Image boundary(omega.cols(), omega.rows(), 3);
+
+    // cout << "Creating Boundary" << endl;
+    boundary = calculateBoundaryMap(omega);
+
+    int redVars;
+    int greenVars;
+    int blueVars;
+
+    // cout << "Counting Vars" << endl;
+    countVars(omega, redVars, greenVars, blueVars);
+
+    Eigen::MatrixXi redIndexGrid;
+    Eigen::MatrixXi greenIndexGrid;
+    Eigen::MatrixXi blueIndexGrid;
+
+    Eigen::MatrixXi redIndexMap;
+    Eigen::MatrixXi greenIndexMap;
+    Eigen::MatrixXi blueIndexMap;
+
+    redIndexGrid.resize(omega.cols(), omega.rows());
+    greenIndexGrid.resize(omega.cols(), omega.rows());
+    blueIndexGrid.resize(omega.cols(), omega.rows());
+
+    redIndexMap.resize(redVars, 2);
+    greenIndexMap.resize(greenVars, 2);
+    blueIndexMap.resize(blueVars, 2);
+
+    // cout << "Calculating Index Maps" << endl;
+    calculateIndexMaps(omega, redIndexMap, greenIndexMap, blueIndexMap);
+    calculateIndexMapsFast(omega, redIndexGrid, greenIndexGrid, blueIndexGrid);
+
+    Eigen::VectorXd redX;
+    Eigen::VectorXd greenX;
+    Eigen::VectorXd blueX;
+
+    redX.resize(redVars);
+    greenX.resize(greenVars);
+    blueX.resize(blueVars);
+
+    redX.setZero();
+    greenX.setZero();
+    blueX.setZero();
+
+    // cout << "Initializing X" << endl;
+    for (int i = 0; i < redVars; i++) {
+        redX(i) = omega.smartAccess(redIndexMap(i, 1), redIndexMap(i, 0), 0);
+    }
+    for (int i = 0; i < greenVars; i++) {
+        greenX(i) = omega.smartAccess(greenIndexMap(i, 1), greenIndexMap(i, 0), 1);
+    }
+    for (int i = 0; i < blueVars; i++) {
+        blueX(i) = omega.smartAccess(blueIndexMap(i, 1), blueIndexMap(i, 0), 2);
+    }
+
+    Eigen::SparseMatrix<double> redA;
+    Eigen::SparseMatrix<double> greenA;
+    Eigen::SparseMatrix<double> blueA;
+
+    Eigen::VectorXd redB;
+    Eigen::VectorXd greenB;
+    Eigen::VectorXd blueB;
+
+    redA.resize(redVars, redVars);
+    greenA.resize(greenVars, greenVars);
+    blueA.resize(blueVars, blueVars);
+
+    redB.resize(redVars);
+    greenB.resize(greenVars);
+    blueB.resize(blueVars);
+
+    // cout << "Calculating Hessians" << endl;
+    calculateHessianAndB(redA, redB, redIndexGrid, redIndexMap, imageB, imageA, boundary, omega, edge, omegaOffset, 0);
+    calculateHessianAndB(greenA, greenB, greenIndexGrid, greenIndexMap, imageB, imageA, boundary, omega, edge, omegaOffset, 1);
+    calculateHessianAndB(blueA, blueB, blueIndexGrid, blueIndexMap, imageB, imageA, boundary, omega, edge, omegaOffset, 2);
+
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > redSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > greenSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > blueSolver;
+
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > redSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > greenSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > blueSolver;
+
+    redSolver.compute(redA);
+    greenSolver.compute(greenA);
+    blueSolver.compute(blueA);
+
+    redX = redSolver.solve(-redB);
+    greenX = greenSolver.solve(-greenB);
+    blueX = blueSolver.solve(-blueB);
+
+    cout << "ERROR: " << (redA * redX + redB).norm() << endl;
+
+    for (int i = 0; i < redVars; i++) {
+        results.set(redIndexMap(i, 1) + omegaOffset[0], redIndexMap(i, 0) + omegaOffset[1], 0, redX(i));
+    }
+
+    for (int i = 0; i < greenVars; i++) {
+        results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
+    }
+
+    for (int i = 0; i < blueVars; i++) {
+        results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
+    }
+
+    return results;
+}
+
+Image seamlessPoissonCloningToon(const Image& imageA, const Image& imageB, const Image& omega, double edgeTh, Eigen::Vector2i omegaOffset) {
+    Image results(imageB.cols(), imageB.rows(), 3);
+
+    for (int c = 0; c < 3; c++) {
+        for (int i = 0; i < results.rows(); i++) {
+            for (int j = 0; j < results.cols(); j++) {
+                results.set(j, i, c, imageB.smartAccess(j, i, c));
+            }
+        }
+    }
+
+    Image boundary(omega.cols(), omega.rows(), 3);
+
+    // cout << "Creating Boundary" << endl;
+    boundary = calculateBoundaryMap(omega);
+
+    int redVars;
+    int greenVars;
+    int blueVars;
+
+    // cout << "Counting Vars" << endl;
+    countVars(omega, redVars, greenVars, blueVars);
+
+    Eigen::MatrixXi redIndexGrid;
+    Eigen::MatrixXi greenIndexGrid;
+    Eigen::MatrixXi blueIndexGrid;
+
+    Eigen::MatrixXi redIndexMap;
+    Eigen::MatrixXi greenIndexMap;
+    Eigen::MatrixXi blueIndexMap;
+
+    redIndexGrid.resize(omega.cols(), omega.rows());
+    greenIndexGrid.resize(omega.cols(), omega.rows());
+    blueIndexGrid.resize(omega.cols(), omega.rows());
+
+    redIndexMap.resize(redVars, 2);
+    greenIndexMap.resize(greenVars, 2);
+    blueIndexMap.resize(blueVars, 2);
+
+    // cout << "Calculating Index Maps" << endl;
+    calculateIndexMaps(omega, redIndexMap, greenIndexMap, blueIndexMap);
+    calculateIndexMapsFast(omega, redIndexGrid, greenIndexGrid, blueIndexGrid);
+
+    Eigen::VectorXd redX;
+    Eigen::VectorXd greenX;
+    Eigen::VectorXd blueX;
+
+    redX.resize(redVars);
+    greenX.resize(greenVars);
+    blueX.resize(blueVars);
+
+    redX.setZero();
+    greenX.setZero();
+    blueX.setZero();
+
+    // cout << "Initializing X" << endl;
+    for (int i = 0; i < redVars; i++) {
+        redX(i) = omega.smartAccess(redIndexMap(i, 1), redIndexMap(i, 0), 0);
+    }
+    for (int i = 0; i < greenVars; i++) {
+        greenX(i) = omega.smartAccess(greenIndexMap(i, 1), greenIndexMap(i, 0), 1);
+    }
+    for (int i = 0; i < blueVars; i++) {
+        blueX(i) = omega.smartAccess(blueIndexMap(i, 1), blueIndexMap(i, 0), 2);
+    }
+
+    Eigen::SparseMatrix<double> redA;
+    Eigen::SparseMatrix<double> greenA;
+    Eigen::SparseMatrix<double> blueA;
+
+    Eigen::VectorXd redB;
+    Eigen::VectorXd greenB;
+    Eigen::VectorXd blueB;
+
+    redA.resize(redVars, redVars);
+    greenA.resize(greenVars, greenVars);
+    blueA.resize(blueVars, blueVars);
+
+    redB.resize(redVars);
+    greenB.resize(greenVars);
+    blueB.resize(blueVars);
+
+    // cout << "Calculating Hessians" << endl;
+    calculateHessianAndB(redA, redB, redIndexGrid, redIndexMap, imageB, imageA, boundary, omega, edgeTh, omegaOffset, 0);
+    calculateHessianAndB(greenA, greenB, greenIndexGrid, greenIndexMap, imageB, imageA, boundary, omega, edgeTh, omegaOffset, 1);
+    calculateHessianAndB(blueA, blueB, blueIndexGrid, blueIndexMap, imageB, imageA, boundary, omega, edgeTh, omegaOffset, 2);
+
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > redSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > greenSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > blueSolver;
+
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > redSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > greenSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > blueSolver;
+
+    redSolver.compute(redA);
+    greenSolver.compute(greenA);
+    blueSolver.compute(blueA);
+
+    redX = redSolver.solve(-redB);
+    greenX = greenSolver.solve(-greenB);
+    blueX = blueSolver.solve(-blueB);
+
+    cout << "ERROR: " << (redA * redX + redB).norm() << endl;
+
+    for (int i = 0; i < redVars; i++) {
+        results.set(redIndexMap(i, 1) + omegaOffset[0], redIndexMap(i, 0) + omegaOffset[1], 0, redX(i));
+    }
+
+    for (int i = 0; i < greenVars; i++) {
+        results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
+    }
+
+    for (int i = 0; i < blueVars; i++) {
+        results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
+    }
+
+    return results;
+}
+
 // imageA is the source image
 // imageB is the dest image
 Image seamlessPoissonCloningLog(const Image& imageA, const Image& imageB, const Image& omega, Eigen::Vector2i omegaOffset) {
@@ -1641,6 +2062,111 @@ void printGradient(const Image& image, string fileName, double offset) {
     gradientIm.write(fileName);
 }
 
+Image edgeDetection(const Image& image, double threshold) {
+    Image edgeIm(image.cols(), image.rows(), 3);
+    Image gradX(image.cols(), image.rows(), 3);
+    Image gradY(image.cols(), image.rows(), 3);
+
+    edgeIm.setZero();
+    gradX.setZero();
+    gradY.setZero();
+
+    for (int i = 1; i < image.rows() - 1; i++) {
+        for (int j = 1; j < image.cols() - 1; j++) {
+            for (int c = 0; c < 3; c++) {
+                // double grad = -1.0 * image.smartAccess(j-1, i+1, c) + 1.0 * image.smartAccess(j+1, i+1, c);
+                // grad += -1.0 * image.smartAccess(j-1, i-1, c) + 1.0 * image.smartAccess(j+1, i-1, c);
+                // grad += -2.0 * image.smartAccess(j-1, i, c) + 2.0 * image.smartAccess(j+1, i, c);
+
+                double grad = -image.smartAccess(j-1, i, c) + image.smartAccess(j+1, i, c);
+                gradX.set(j, i, c, grad);
+            }
+        }
+    }
+
+    for (int i = 1; i < image.rows() - 1; i++) {
+        for (int j = 1; j < image.cols() - 1; j++) {
+            for (int c = 0; c < 3; c++) {
+                // double grad = -1.0 * image.smartAccess(j+1, i-1, c) + 1.0 * image.smartAccess(j+1, i+1, c);
+                // grad += -1.0 * image.smartAccess(j-1, i-1, c) + 1.0 * image.smartAccess(j-1, i+1, c);
+                // grad += -2.0 * image.smartAccess(j, i-1, c) + 2.0 * image.smartAccess(j, i+1, c);
+
+                double grad = -1.0 * image.smartAccess(j, i-1, c) + 1.0 * image.smartAccess(j, i+1, c);
+                gradY.set(j, i, c, grad);
+            }
+        }
+    }
+
+    for (int i = 0; i < image.rows(); i++) {
+        for (int j = 0; j < image.cols(); j++) {
+            for (int c = 0; c < 3; c++) {
+                double mag = sqrt(gradX.smartAccess(j, i, c) * gradX.smartAccess(j, i, c) + gradY.smartAccess(j, i, c) * gradY.smartAccess(j, i, c));
+                if (mag > threshold)
+                    edgeIm.set(j, i, c, 1.0);
+            }
+        }
+    }
+
+    return edgeIm;
+}
+
+Image edgeDetectionX(const Image& image, double threshold) {
+    Image edgeIm(image.cols(), image.rows(), 3);
+
+    Image gradX(image.cols(), image.rows(), 3);
+    Image gradY(image.cols(), image.rows(), 3);
+
+    for (int i = 1; i < image.rows() - 1; i++) {
+        for (int j = 1; j < image.cols() - 1; j++) {
+            for (int c = 0; c < 3; c++) {
+                double grad = -1.0 * image.smartAccess(j-1, i+1, c) + 1.0 * image.smartAccess(j+1, i+1, c);
+                grad += -1.0 * image.smartAccess(j-1, i-1, c) + 1.0 * image.smartAccess(j+1, i-1, c);
+                grad += -2.0 * image.smartAccess(j-1, i, c) + 2.0 * image.smartAccess(j+1, i, c);
+
+                grad = sqrt(grad * grad);
+                if (grad > threshold) edgeIm.set(j, i, c, 1.0);
+            }
+        }
+    }
+
+    return edgeIm;
+}
+
+Image edgeDetectionY(const Image& image, double threshold) {
+    Image edgeIm(image.cols(), image.rows(), 3);
+
+    Image gradX(image.cols(), image.rows(), 3);
+    Image gradY(image.cols(), image.rows(), 3);
+
+    for (int i = 1; i < image.rows() - 1; i++) {
+        for (int j = 1; j < image.cols() - 1; j++) {
+            for (int c = 0; c < 3; c++) {
+                double grad = -1.0 * image.smartAccess(j+1, i-1, c) + 1.0 * image.smartAccess(j+1, i+1, c);
+                grad += -1.0 * image.smartAccess(j-1, i-1, c) + 1.0 * image.smartAccess(j-1, i+1, c);
+                grad += -2.0 * image.smartAccess(j, i-1, c) + 2.0 * image.smartAccess(j, i+1, c);
+
+                grad = sqrt(grad * grad);
+                if (grad > threshold) edgeIm.set(j, i, c, 1.0);
+            }
+        }
+    }
+
+    return edgeIm;
+}
+
+double edgeGradY(const Image& image, int row, int col) {
+    // int i = row;
+    // int j = col;
+    //
+    // double grad = -1.0 * image.smartAccess(j+1, i-1, c) + 1.0 * image.smartAccess(j+1, i+1, c);
+    // grad += -1.0 * image.smartAccess(j-1, i-1, c) + 1.0 * image.smartAccess(j-1, i+1, c);
+    // grad += -2.0 * image.smartAccess(j, i-1, c) + 2.0 * image.smartAccess(j, i+1, c);
+    //
+    // return grad;
+
+    return 0.0;
+}
+
 void sparseFaceSwapDemo() {
     Image imageB(DATA_DIR "/input/girlOne.jpg");
     Image imageA(DATA_DIR "/input/girlTwo.jpg");
@@ -1678,8 +2204,105 @@ void sparseFaceSwapDemo() {
     printGradient(imageB, DATA_DIR "/output/girlGradOne.png", 0.5);
     printGradient(imageA, DATA_DIR "/output/girlGradTwo.png", 0.5);
     printGradient(fix2, DATA_DIR "/output/faceSwapResults.png", 0.5);
+
+    edgeDetection(fix2, 0.0).write(DATA_DIR "/output/faceSwapED-0_0.png");
+    edgeDetection(fix2, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
+    edgeDetection(fix2, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
+    edgeDetection(fix2, 0.3).write(DATA_DIR "/output/faceSwapED-0_3.png");
+    edgeDetection(fix2, 0.4).write(DATA_DIR "/output/faceSwapED-0_4.png");
+    edgeDetection(fix2, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
+    edgeDetection(fix2, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
+    edgeDetection(fix2, 0.7).write(DATA_DIR "/output/faceSwapED-0_7.png");
+    edgeDetection(fix2, 0.8).write(DATA_DIR "/output/faceSwapED-0_8.png");
+    edgeDetection(fix2, 0.9).write(DATA_DIR "/output/faceSwapED-0_9.png");
+    // edgeDetection(fix2, 0.95).write(DATA_DIR "/output/faceSwapED-0_95.png");
+    // edgeDetection(fix2, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
+    // edgeDetection(fix2, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
+
+    edgeDetectionX(fix2, 0.0).write(DATA_DIR "/output/faceSwapEDX-0_0.png");
+    edgeDetectionX(fix2, 0.1).write(DATA_DIR "/output/faceSwapEDX-0_1.png");
+    edgeDetectionX(fix2, 0.3).write(DATA_DIR "/output/faceSwapEDX-0_3.png");
+    edgeDetectionX(fix2, 0.6).write(DATA_DIR "/output/faceSwapEDX-0_6.png");
+    edgeDetectionX(fix2, 0.9).write(DATA_DIR "/output/faceSwapEDX-0_9.png");
+    edgeDetectionX(fix2, 0.95).write(DATA_DIR "/output/faceSwapEDX-0_95.png");
+    edgeDetectionX(fix2, 0.5).write(DATA_DIR "/output/faceSwapEDX-0_5.png");
+    edgeDetectionX(fix2, 0.6).write(DATA_DIR "/output/faceSwapEDX-0_6.png");
+
+    edgeDetectionY(fix2, 0.0).write(DATA_DIR "/output/faceSwapEDY-0_0.png");
+    edgeDetectionY(fix2, 0.1).write(DATA_DIR "/output/faceSwapEDY-0_1.png");
+    edgeDetectionY(fix2, 0.3).write(DATA_DIR "/output/faceSwapEDY-0_3.png");
+    edgeDetectionY(fix2, 0.6).write(DATA_DIR "/output/faceSwapEDY-0_6.png");
+    edgeDetectionY(fix2, 0.9).write(DATA_DIR "/output/faceSwapEDY-0_9.png");
+    edgeDetectionY(fix2, 0.95).write(DATA_DIR "/output/faceSwapEDY-0_95.png");
+    edgeDetectionY(fix2, 0.5).write(DATA_DIR "/output/faceSwapEDY-0_5.png");
+    edgeDetectionY(fix2, 0.6).write(DATA_DIR "/output/faceSwapEDY-0_6.png");
 }
 
+void toonShaderDemo() {
+    Image imageB(DATA_DIR "/output/faceSwapHealedRight.png");
+    Image imageA(DATA_DIR "/output/faceSwapHealedRight.png");
+    // Image imageB(DATA_DIR "/input/girlTwo.jpg");
+    // Image imageA(DATA_DIR "/input/girlTwo.jpg");
+    Image omega(DATA_DIR "/input/fullFaceWeights.png");
+
+    Image edge = edgeDetection(imageA, 0.09);
+
+    Eigen::Vector2i offset;
+    offset[0] = 0;
+    offset[1] = 0;
+
+    edgeDetection(imageA, 0.03).write(DATA_DIR "/output/faceSwapED-0_03.png");
+    edgeDetection(imageA, 0.05).write(DATA_DIR "/output/faceSwapED-0_05.png");
+    edgeDetection(imageA, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
+    edgeDetection(imageA, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
+    edgeDetection(imageA, 0.3).write(DATA_DIR "/output/faceSwapED-0_3.png");
+    edgeDetection(imageA, 0.4).write(DATA_DIR "/output/faceSwapED-0_4.png");
+    edgeDetection(imageA, 0.5).write(DATA_DIR "/output/faceSwapED-0_5.png");
+    edgeDetection(imageA, 0.6).write(DATA_DIR "/output/faceSwapED-0_6.png");
+    edgeDetection(imageA, 0.7).write(DATA_DIR "/output/faceSwapED-0_7.png");
+    edgeDetection(imageA, 0.8).write(DATA_DIR "/output/faceSwapED-0_8.png");
+    edgeDetection(imageA, 0.9).write(DATA_DIR "/output/faceSwapED-0_9.png");
+
+    Image results = seamlessPoissonCloningToon(imageA, imageB, omega, edge, offset);
+    results.write(DATA_DIR "/output/faceWHOA.png");
+    results.setZero();
+
+    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.1, offset);
+    results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_1.png");
+    results.setZero();
+
+    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.05, offset);
+    results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_05.png");
+    results.setZero();
+
+    results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.15, offset);
+    results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_15.png");
+    results.setZero();
+
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.4, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_4.png");
+    // results.setZero();
+    //
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.5, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_5.png");
+    // results.setZero();
+    //
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.6, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_6.png");
+    // results.setZero();
+    //
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.7, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_7.png");
+    // results.setZero();
+    //
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.8, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_8.png");
+    // results.setZero();
+    //
+    // results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.9, offset);
+    // results.write(DATA_DIR "/output/faceSwapToonResultsValFaceOnly_9.png");
+    // results.setZero();
+}
 
 void polarBearExample() {
     cout << "Polar Bear Example" << endl;
@@ -1753,6 +2376,7 @@ int main(int argc, char* argv[]) {
     // sparseFoxLogDemo();
 
     sparseFaceSwapDemo();
+    toonShaderDemo();
 
     return 0;
 }
