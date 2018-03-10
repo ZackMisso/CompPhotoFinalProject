@@ -1377,50 +1377,35 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     calculateHessianAndB(greenA, greenB, greenIndexGrid, greenIndexMap, imageB, imageA, boundary, omega, omegaOffset, 1);
     calculateHessianAndB(blueA, blueB, blueIndexGrid, blueIndexMap, imageB, imageA, boundary, omega, omegaOffset, 2);
 
-    Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > redSolver;
-    Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > greenSolver;
-    Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > blueSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > redSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > greenSolver;
+    // Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > blueSolver;
+
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > redSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > greenSolver;
+    Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > blueSolver;
 
     redSolver.compute(redA);
     greenSolver.compute(greenA);
     blueSolver.compute(blueA);
 
-    // redX.setZero();
-    // greenX.setZero();
-    // blueX.setZero();
-
-    // cout << "Solving" << endl;
-
     redX = redSolver.solve(-redB);
     greenX = greenSolver.solve(-greenB);
     blueX = blueSolver.solve(-blueB);
 
-    // cout << "X: " << endl << redX << endl;
-
-    // std::cout << "#iterations:     " << redSolver.iterations() << std::endl;
-    // std::cout << "estimated error: " << redSolver.error()      << std::endl;
-
-    // for (int c = 0; c < 3; c++) {
-    //     for (int i = 0; i < results.rows(); i++) {
-    //         for (int j = 0; j < results.cols(); j++) {
-    //             results.set(j, i, c, imageB.smartAccess(j, i, c));
-    //         }
-    //     }
-    // }
-
-    // cout << "Writing Image" << endl;
+    cout << "ERROR: " << (redA * redX + redB).norm() << endl;
 
     for (int i = 0; i < redVars; i++) {
         results.set(redIndexMap(i, 1) + omegaOffset[0], redIndexMap(i, 0) + omegaOffset[1], 0, redX(i));
     }
-    //
-    // for (int i = 0; i < greenVars; i++) {
-    //     results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
-    // }
 
-    // for (int i = 0; i < blueVars; i++) {
-    //     results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
-    // }
+    for (int i = 0; i < greenVars; i++) {
+        results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
+    }
+
+    for (int i = 0; i < blueVars; i++) {
+        results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
+    }
 
     return results;
 }
@@ -1618,6 +1603,84 @@ void sparseFoxLogDemo() {
     results.write(DATA_DIR "/output/foxDemoLogLow.png");
 }
 
+void printOmegaLocation(const Image& imageB, const Image& omega, Eigen::Vector2i offset, string filename) {
+    Image image(imageB.cols(), imageB.rows(), 3);
+
+    for (int i = 0; i < imageB.rows(); i++) {
+        for (int j = 0; j < imageB.cols(); j++) {
+            image.set(j, i, 0, imageB.smartAccess(j, i, 0));
+            image.set(j, i, 1, imageB.smartAccess(j, i, 1));
+            image.set(j, i, 2, imageB.smartAccess(j, i, 2));
+        }
+    }
+
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega.smartAccess(j, i, 0) > 0.3) image.set(j + offset[0], i + offset[1], 0, 0.0);
+            if (omega.smartAccess(j, i, 1) > 0.3) image.set(j + offset[0], i + offset[1], 1, 0.0);
+            if (omega.smartAccess(j, i, 2) > 0.3) image.set(j + offset[0], i + offset[1], 2, 0.0);
+        }
+    }
+
+    image.write(filename);
+}
+
+void printGradient(const Image& image, string fileName, double offset) {
+    Image gradientIm(image.cols(), image.rows(), 3);
+
+    for (int i = 1; i < image.rows() - 1; i++) {
+        for (int j = 1; j < image.cols() - 1; j++) {
+            for (int c = 0; c < 3; c++) {
+                double gradient = -1.0 * image.smartAccess(j-1, i, c) + 1.0 * image.smartAccess(j+1, i, c);
+                gradient += -1.0 * image.smartAccess(j, i-1, c) + 1.0 * image.smartAccess(j, i+1, c);
+                gradientIm.set(j, i, c, gradient + offset);
+            }
+        }
+    }
+
+    gradientIm.write(fileName);
+}
+
+void sparseFaceSwapDemo() {
+    Image imageB(DATA_DIR "/input/girlOne.jpg");
+    Image imageA(DATA_DIR "/input/girlTwo.jpg");
+    Image omega(DATA_DIR "/input/girlTwoWeights2.png");
+    Eigen::Vector2i offset;
+    offset[0] = 4;
+    offset[1] = 25;
+
+    Image swap = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    swap.write(DATA_DIR "/output/faceSwapDemo.png");
+
+    Image imageA2(DATA_DIR "/output/faceSwapDemo.png");
+    Image imageB2(DATA_DIR "/output/faceSwapDemo.png");
+    Image omega2(DATA_DIR "/input/HealingWeights11.png");
+
+    Eigen::Vector2i offset2;
+    offset2[0] = -60;
+    offset2[1] = 40;
+
+    Image fix1 = seamlessPoissonCloning(imageA2, imageB2, omega2, offset2);
+    fix1.write(DATA_DIR "/output/faceSwapHealedLeft.png");
+
+    Image imageA3(DATA_DIR "/output/faceSwapHealedLeft.png");
+    Image imageB3(DATA_DIR "/output/faceSwapHealedLeft.png");
+    Image omega3(DATA_DIR "/input/HealingWeights22.png");
+
+    Eigen::Vector2i offset3;
+    offset3[0] = 50;
+    offset3[1] = 40;
+
+    Image fix2 = seamlessPoissonCloning(imageA3, imageB3, omega3, offset3);
+    fix2.write(DATA_DIR "/output/faceSwapHealedRight.png");
+
+    printOmegaLocation(imageB3, omega3, offset3, DATA_DIR "/output/faceSwapHealedRightOffset.png");
+    printGradient(imageB, DATA_DIR "/output/girlGradOne.png", 0.5);
+    printGradient(imageA, DATA_DIR "/output/girlGradTwo.png", 0.5);
+    printGradient(fix2, DATA_DIR "/output/faceSwapResults.png", 0.5);
+}
+
+
 void polarBearExample() {
     cout << "Polar Bear Example" << endl;
     // TODO
@@ -1687,7 +1750,9 @@ int main(int argc, char* argv[]) {
     // sparseDogLogDemo();
 
     // sparseFoxDemo();
-    sparseFoxLogDemo();
+    // sparseFoxLogDemo();
+
+    sparseFaceSwapDemo();
 
     return 0;
 }

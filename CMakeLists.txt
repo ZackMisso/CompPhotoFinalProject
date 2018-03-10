@@ -74,7 +74,7 @@ include_directories(# Include directory
                     ${NANOGUI_EXTRA_INCS}
                     ${PROJECT_SOURCE_DIR}/src/
                     ${PROJECT_SOURCE_DIR}/include/
-                    ${PROJECT_SOURCE_DIR}/ext/
+                    #${PROJECT_SOURCE_DIR}/ext/
                     ${PROJECT_SOURCE_DIR}/ext/stb/
                     ${PROJECT_SOURCE_DIR}/ext/eigen/
 )
@@ -86,14 +86,14 @@ set(ext_stb_srcs
 
 add_definitions(-DDATA_DIR=R\"\(${PROJECT_SOURCE_DIR}/data\)\")
 
-set(common_srcs
-    include/poly/common.h
-    include/poly/image.h
-    include/poly/utils.h
-    include/poly/gui.h
-    include/poly/indexmap.h
-    include/poly/subscreen.h
-)
+#set(common_srcs
+#    include/poly/common.h
+#    include/poly/image.h
+#    include/poly/utils.h
+#    include/poly/gui.h
+#    include/poly/indexmap.h
+#    include/poly/subscreen.h
+#)
 
 # Compile common library
 #add_library(common_lib STATIC
@@ -106,19 +106,19 @@ set(common_srcs
 #SOURCE_GROUP("ext\\stb" FILES ${ext_stb_srcs})
 
 set(poly_srcs
-    ext/stb/stb_image_write.h
-    ext/stb/stb_image.h
+    #ext/stb/stb_image_write.h
+    #ext/stb/stb_image.h
 
     include/poly/common.h
     include/poly/image.h
     include/poly/utils.h
-    include/poly/gui.h
+    #include/poly/gui.h
     include/poly/indexmap.h
     include/poly/subscreen.h
 
     src/main.cpp
     src/image.cpp
-    src/gui.cpp
+    #src/gui.cpp
     src/indexmap.cpp
     src/subscreen.cpp
 )    # a5

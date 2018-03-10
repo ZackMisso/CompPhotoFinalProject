@@ -4,11 +4,14 @@
 
 #include <poly/image.h>
 
+
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+
+#include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb/stb_image_write.h>     // for stbi_write_bmp, stbi_write_hdr, stbi...
+
+#include "stb_image_write.h"    // for stbi_write_bmp, stbi_write_hdr, stbi...
 
 unsigned char floatToByte(float in)
 {
@@ -41,6 +44,10 @@ Image::Image(int w, int h, int c) {
     red = Eigen::MatrixXd(height, width);
     green = Eigen::MatrixXd(height, width);
     blue = Eigen::MatrixXd(height, width);
+
+    red.setZero();
+    green.setZero();
+    blue.setZero();
 }
 
 Image::Image(const std::string& filename) {
@@ -70,6 +77,10 @@ double Image::smartAccess(int x, int y, int z) const {
 double Image::smartAccess(int x, int y, Eigen::Vector2i offset, int z) const {
     int xx = x + offset[0];
     int yy = y + offset[1];
+
+    if (z >= 3 || z < 0) cout << "WHAT" << endl;
+    if (xx >= width || xx < 0) cout << "WHAT" << endl;
+    if (yy >= height || yy < 0) cout << "WHAT" << endl;
 
     if (z >= 3 || z < 0) return 0.0;
     if (xx >= width || xx < 0) return 0.0;

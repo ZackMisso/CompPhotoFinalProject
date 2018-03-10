@@ -99,6 +99,8 @@ RECENT REVISION HISTORY:
     Christian Floisand      Kevin Schmidt                         github:poppolopoppo
 */
 
+#pragma once
+
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H
 
