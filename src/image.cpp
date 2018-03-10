@@ -110,6 +110,42 @@ void Image::printGreen() {
     cout << green << endl;
 }
 
+void Image::toLog() {
+    double minf = minNonZero();
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            red(i, j) = log10(max(red(i, j), minf));
+            green(i, j) = log10(max(green(i, j), minf));
+            blue(i, j) = log10(max(blue(i, j), minf));
+        }
+    }
+}
+
+void Image::toLin() {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            red(i, j) = pow(10.0, red(i, j));
+            green(i, j) = pow(10.0, green(i, j));
+            blue(i, j) = pow(10.0, blue(i, j));
+        }
+    }
+}
+
+double Image::minNonZero() {
+    double minNon = 2.0;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (red(i, j) < minNon && red(i, j) > 0.0) minNon = red(i, j);
+            if (green(i, j) < minNon && green(i, j) > 0.0) minNon = green(i, j);
+            if (blue(i, j) < minNon && blue(i, j) > 0.0) minNon = blue(i, j);
+        }
+    }
+
+    return minNon;
+}
+
 bool Image::read(const std::string& filename) {
     int n, w, h;
 

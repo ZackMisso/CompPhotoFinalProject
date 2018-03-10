@@ -226,6 +226,7 @@ int countVars(const Eigen::MatrixXd& omega) {
 //     return count;
 // }
 
+// MAJOR SLOW DOWN
 int findIndex(const Eigen::MatrixXi& indexMap, int row, int col) {
     for (int i = 0; i < indexMap.rows(); i++) {
         if (indexMap(i, 0) == row && indexMap(i, 1) == col) return i;
@@ -538,6 +539,42 @@ void calculateIndexMaps(const Image& omega, Eigen::MatrixXi& redIndexMap, Eigen:
     }
 }
 
+void calculateIndexMapsFast(const Image& omega, Eigen::MatrixXi& redIndexMap, Eigen::MatrixXi& greenIndexMap, Eigen::MatrixXi& blueIndexMap) {
+    redIndexMap.setZero();
+    greenIndexMap.setZero();
+    blueIndexMap.setZero();
+
+    // int varIndex = 0;
+    // for (int i = 0; i < omega.rows(); i++) {
+    //     for (int j = 0; j < omega.cols(); j++) {
+    //         if (omega(i, j) > 0.5) {
+    //             indexMap(varIndex, 0) = i;
+    //             indexMap(varIndex, 1) = j;
+    //             x(i) = newImg(i, j);
+    //             varIndex++;
+    //         }
+    //     }
+    // }
+
+    int redVarIndex = 0;
+    int greenVarIndex = 0;
+    int blueVarIndex = 0;
+
+    for (int i = 0; i < omega.rows(); i++) {
+        for (int j = 0; j < omega.cols(); j++) {
+            if (omega.smartAccess(j, i, 0) > 0.5) {
+                redIndexMap(i, j) = redVarIndex++;
+            }
+            if (omega.smartAccess(j, i, 1) > 0.5) {
+                greenIndexMap(i, j) = greenVarIndex++;
+            }
+            if (omega.smartAccess(j, i, 2) > 0.5) {
+                blueIndexMap(i, j) = blueVarIndex++;
+            }
+        }
+    }
+}
+
 double calculateSumOfGradiant(int i, int j, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, int ch) {
     double sum = 0.0;
 
@@ -756,8 +793,10 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
     }
 }
 
-void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, Eigen::Vector2i offset, int ch) {
+void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, const Eigen::MatrixXi& indexGrid, const Eigen::MatrixXi& indexMap, const Image& imageB, const Image& imageA, const Image& boundary, const Image& omega, const Eigen::Vector2i offset, int ch) {
     b.setZero();
+
+    cout << "VARS: " << indexMap.rows() << endl;
 
     for (int i = 0; i < indexMap.rows(); i++) {
         int row = indexMap(i, 0);
@@ -765,8 +804,12 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
 
         A.insert(i, i) = 8.0;
 
+        // cout << "HERE" << endl;
+
         if (omega.smartAccess(col + 1, row, ch) > 0.5) {
-            int index = findIndex(indexMap, row, col + 1);
+            // int index = findIndexFast(indexMap, row, col + 1);
+            int index = indexGrid(row, col + 1);
+            // cout << index << endl;
             A.insert(i, index) = -2.0;
         } else {
             if (boundary.smartAccess(col + 1, row, ch) > 0.5) {
@@ -777,7 +820,8 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
         }
 
         if (omega.smartAccess(col - 1, row, ch) > 0.5) {
-            int index = findIndex(indexMap, row, col - 1);
+            // int index = findIndexFast(indexMap, row, col - 1);
+            int index = indexGrid(row, col - 1);
             A.insert(i, index) = -2.0;
         } else {
             if (boundary.smartAccess(col - 1, row, ch) > 0.5) {
@@ -788,7 +832,8 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
         }
 
         if (omega.smartAccess(col, row - 1, ch) > 0.5) {
-            int index = findIndex(indexMap, row - 1, col);
+            // int index = findIndexFast(indexMap, row - 1, col);
+            int index = indexGrid(row - 1, col);
             A.insert(i, index) = -2.0;
         } else {
             if (boundary.smartAccess(col, row - 1, ch) > 0.5) {
@@ -799,7 +844,8 @@ void calculateHessianAndB(Eigen::SparseMatrix<double>& A, Eigen::VectorXd& b, co
         }
 
         if (omega.smartAccess(col, row + 1, ch) > 0.5) {
-            int index = findIndex(indexMap, row + 1, col);
+            // int index = findIndexFast(indexMap, row + 1, col);
+            int index = indexGrid(row + 1, col);
             A.insert(i, index) = -2.0;
         } else {
             if (boundary.smartAccess(col, row + 1, ch) > 0.5) {
@@ -1186,26 +1232,35 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
 
     Image boundary(omega.cols(), omega.rows(), 3);
 
-    cout << "Creating Boundary" << endl;
+    // cout << "Creating Boundary" << endl;
     boundary = calculateBoundaryMap(omega);
 
     int redVars;
     int greenVars;
     int blueVars;
 
-    cout << "Counting Vars" << endl;
+    // cout << "Counting Vars" << endl;
     countVars(omega, redVars, greenVars, blueVars);
+
+    Eigen::MatrixXi redIndexGrid;
+    Eigen::MatrixXi greenIndexGrid;
+    Eigen::MatrixXi blueIndexGrid;
 
     Eigen::MatrixXi redIndexMap;
     Eigen::MatrixXi greenIndexMap;
     Eigen::MatrixXi blueIndexMap;
 
+    redIndexGrid.resize(omega.cols(), omega.rows());
+    greenIndexGrid.resize(omega.cols(), omega.rows());
+    blueIndexGrid.resize(omega.cols(), omega.rows());
+
     redIndexMap.resize(redVars, 2);
     greenIndexMap.resize(greenVars, 2);
     blueIndexMap.resize(blueVars, 2);
 
-    cout << "Calculating Index Maps" << endl;
+    // cout << "Calculating Index Maps" << endl;
     calculateIndexMaps(omega, redIndexMap, greenIndexMap, blueIndexMap);
+    calculateIndexMapsFast(omega, redIndexGrid, greenIndexGrid, blueIndexGrid);
 
     Eigen::VectorXd redX;
     Eigen::VectorXd greenX;
@@ -1219,7 +1274,7 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     greenX.setZero();
     blueX.setZero();
 
-    cout << "Initializing X" << endl;
+    // cout << "Initializing X" << endl;
     for (int i = 0; i < redVars; i++) {
         redX(i) = omega.smartAccess(redIndexMap(i, 1), redIndexMap(i, 0), 0);
     }
@@ -1246,10 +1301,10 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     greenB.resize(greenVars);
     blueB.resize(blueVars);
 
-    cout << "Calculating Hessians" << endl;
-    calculateHessianAndB(redA, redB, redIndexMap, imageB, imageA, boundary, omega, omegaOffset, 0);
-    calculateHessianAndB(greenA, greenB, greenIndexMap, imageB, imageA, boundary, omega, omegaOffset, 1);
-    calculateHessianAndB(blueA, blueB, blueIndexMap, imageB, imageA, boundary, omega, omegaOffset, 2);
+    // cout << "Calculating Hessians" << endl;
+    calculateHessianAndB(redA, redB, redIndexGrid, redIndexMap, imageB, imageA, boundary, omega, omegaOffset, 0);
+    calculateHessianAndB(greenA, greenB, greenIndexGrid, greenIndexMap, imageB, imageA, boundary, omega, omegaOffset, 1);
+    calculateHessianAndB(blueA, blueB, blueIndexGrid, blueIndexMap, imageB, imageA, boundary, omega, omegaOffset, 2);
 
     Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > redSolver;
     Eigen::SimplicialLDLT< Eigen::SparseMatrix<double> > greenSolver;
@@ -1263,7 +1318,7 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     // greenX.setZero();
     // blueX.setZero();
 
-    cout << "Solving" << endl;
+    // cout << "Solving" << endl;
 
     redX = redSolver.solve(-redB);
     greenX = greenSolver.solve(-greenB);
@@ -1282,7 +1337,7 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     //     }
     // }
 
-    cout << "Writing Image" << endl;
+    // cout << "Writing Image" << endl;
 
     for (int i = 0; i < redVars; i++) {
         results.set(redIndexMap(i, 1) + omegaOffset[0], redIndexMap(i, 0) + omegaOffset[1], 0, redX(i));
@@ -1309,6 +1364,22 @@ void sparseDogDemo() {
 
     Image results = seamlessPoissonCloning(imageA, imageB, omega, offset);
     results.write(DATA_DIR "/output/doggoTestSparseOffset.png");
+}
+
+void sparseDogLogDemo() {
+    Image imageB(DATA_DIR "/input/water.jpg");
+    Image imageA(DATA_DIR "/input/doggo.jpg");
+    Image omega(DATA_DIR "/input/dogweights.png");
+    Eigen::Vector2i offset;
+    offset[0] = 100;
+    offset[1] = 0;
+
+    imageA.toLog();
+    imageB.toLog();
+
+    Image results = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    results.toLin();
+    results.write(DATA_DIR "/output/doggoTestSparseOffsetLog.png");
 }
 
 void polarBearExample() {
@@ -1353,18 +1424,18 @@ void quickSparseMatrixVerify() {
 
 int main(int argc, char* argv[]) {
     // quickSparseMatrixVerify();
-
+    //
     // std::cout << "PHOTO OF MY BINS" << std::endl;
-
+    //
     // testImageWrite();
-
+    //
     // Eigen::MatrixXd m(2,2);
     // m(0,0) = 3;
     // m(1,0) = 2.5;
     // m(0,1) = -1;
     // m(1,1) = m(1,0) + m(0,1);
     // std::cout << m << std::endl;
-
+    //
     // inClassExample();
     //
     // twodExample();
@@ -1375,7 +1446,9 @@ int main(int argc, char* argv[]) {
 
     // dogDemo();
 
-    sparseDogDemo();
+    // sparseDogDemo();
+
+    sparseDogLogDemo();
 
     return 0;
 }

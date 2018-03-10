@@ -20,6 +20,10 @@ public:
     void resize(int cols, int rows, int ch);
     void setZero();
 
+    void toLog();
+    void toLin();
+    double minNonZero();
+
     void printRed();
     void printGreen();
     void printBlue();
