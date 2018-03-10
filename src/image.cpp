@@ -5,10 +5,10 @@
 #include <poly/image.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb/stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"     // for stbi_write_bmp, stbi_write_hdr, stbi...
+#include <stb/stb_image_write.h>     // for stbi_write_bmp, stbi_write_hdr, stbi...
 
 unsigned char floatToByte(float in)
 {

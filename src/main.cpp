@@ -1413,14 +1413,14 @@ Image seamlessPoissonCloning(const Image& imageA, const Image& imageB, const Ima
     for (int i = 0; i < redVars; i++) {
         results.set(redIndexMap(i, 1) + omegaOffset[0], redIndexMap(i, 0) + omegaOffset[1], 0, redX(i));
     }
+    //
+    // for (int i = 0; i < greenVars; i++) {
+    //     results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
+    // }
 
-    for (int i = 0; i < greenVars; i++) {
-        results.set(greenIndexMap(i, 1) + omegaOffset[0], greenIndexMap(i, 0) + omegaOffset[1], 1, greenX(i));
-    }
-
-    for (int i = 0; i < blueVars; i++) {
-        results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
-    }
+    // for (int i = 0; i < blueVars; i++) {
+    //     results.set(blueIndexMap(i, 1) + omegaOffset[0], blueIndexMap(i, 0) + omegaOffset[1], 2, blueX(i));
+    // }
 
     return results;
 }
@@ -1610,11 +1610,11 @@ void sparseFoxLogDemo() {
     offset[0] = 0;
     offset[1] = 0;
 
-    // imageA.toLog();
-    // imageB.toLog();
+    imageA.toLog();
+    imageB.toLog();
 
-    Image results = seamlessPoissonCloningLog(imageA, imageB, omega, offset);
-    // results.toLin();
+    Image results = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    results.toLin();
     results.write(DATA_DIR "/output/foxDemoLogLow.png");
 }
 
@@ -1686,7 +1686,7 @@ int main(int argc, char* argv[]) {
 
     // sparseDogLogDemo();
 
-    sparseFoxDemo();
+    // sparseFoxDemo();
     sparseFoxLogDemo();
 
     return 0;

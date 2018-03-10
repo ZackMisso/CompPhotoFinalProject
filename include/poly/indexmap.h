@@ -1,3 +1,5 @@
+#pragma once
+
 // #pragma once
 //
 // // data structure to make things faster
