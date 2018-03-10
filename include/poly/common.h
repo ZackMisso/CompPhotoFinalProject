@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <Eigen/Sparse>
+#include <Eigen/SparseCholesky>
 
 #include <sstream>
 #include <algorithm>

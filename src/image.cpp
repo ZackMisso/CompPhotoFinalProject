@@ -67,6 +67,21 @@ double Image::smartAccess(int x, int y, int z) const {
     return 0.0;
 }
 
+double Image::smartAccess(int x, int y, Eigen::Vector2i offset, int z) const {
+    int xx = x + offset[0];
+    int yy = y + offset[1];
+
+    if (z >= 3 || z < 0) return 0.0;
+    if (xx >= width || xx < 0) return 0.0;
+    if (yy >= height || yy < 0) return 0.0;
+
+    if (z == 0) return red(yy, xx);
+    if (z == 1) return green(yy, xx);
+    if (z == 2) return blue(yy, xx);
+
+    return 0.0;
+}
+
 void Image::set(int x, int y, int z, double value) {
     if (z >= 3 || z < 0) return;
     if (x >= width || x < 0) return;
