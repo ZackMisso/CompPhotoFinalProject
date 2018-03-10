@@ -22,6 +22,8 @@ set(common_srcs
     include/poly/common.h
     include/poly/image.h
     include/poly/utils.h
+    include/poly/gui.h
+    include/poly/indexmap.h
 )
 
 # Compile common library
@@ -41,9 +43,13 @@ set(poly_srcs
     include/poly/common.h
     include/poly/image.h
     include/poly/utils.h
+    include/poly/gui.h
+    include/poly/indexmap.h
 
     src/main.cpp
     src/image.cpp
+    src/gui.cpp
+    src/indexmap.cpp
 )    # a5
 
 add_executable(poly ${poly_srcs})                                               # a5
