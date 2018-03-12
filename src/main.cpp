@@ -429,8 +429,8 @@ void twodExample() {
     replaceMap << 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0,
                   0, 0, 1, 1, 1, 0, 0,
-                  0, 0, 1, 1, 0, 0, 0,
-                  0, 0, 1, 0, 1, 0, 0,
+                  0, 0, 1, 1, 1, 0, 0,
+                  0, 0, 1, 1, 1, 0, 0,
                   0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0;
 
@@ -458,6 +458,18 @@ void twodExample() {
     // cout << "OMEGA (2, 3): " << replaceMap(0, 1) << endl;
 
     // cout << endl << replaceMap << endl;
+
+    cout << "BOUND:" << endl;
+
+    cout << boundaryMap << endl;
+
+    cout << endl;
+
+    cout << "REPL:" << endl;
+
+    cout << replaceMap << endl;
+
+    cout << endl;
 
     Eigen::VectorXd points = solveMissingPoints(imageB, imageA, boundaryMap, replaceMap);
 }
@@ -2026,20 +2038,44 @@ void sparseFoxLogDemo() {
 
 void printOmegaLocation(const Image& imageB, const Image& omega, Eigen::Vector2i offset, string filename) {
     Image image(imageB.cols(), imageB.rows(), 3);
+    // Image image2(imageB.cols(), imageB.rows(), 3);
 
     for (int i = 0; i < imageB.rows(); i++) {
         for (int j = 0; j < imageB.cols(); j++) {
             image.set(j, i, 0, imageB.smartAccess(j, i, 0));
             image.set(j, i, 1, imageB.smartAccess(j, i, 1));
             image.set(j, i, 2, imageB.smartAccess(j, i, 2));
+
+            // image2.set(j, i, 0, imageB.smartAccess(j, i, 0));
+            // image2.set(j, i, 1, imageB.smartAccess(j, i, 1));
+            // image2.set(j, i, 2, imageB.smartAccess(j, i, 2));
         }
     }
 
     for (int i = 0; i < omega.rows(); i++) {
         for (int j = 0; j < omega.cols(); j++) {
-            if (omega.smartAccess(j, i, 0) > 0.3) image.set(j + offset[0], i + offset[1], 0, 0.0);
-            if (omega.smartAccess(j, i, 1) > 0.3) image.set(j + offset[0], i + offset[1], 1, 0.0);
-            if (omega.smartAccess(j, i, 2) > 0.3) image.set(j + offset[0], i + offset[1], 2, 0.0);
+            if (omega.smartAccess(j, i, 0) > 0.3) {
+                image.set(j + offset[0], i + offset[1], 0, 1.0);
+                image.set(j + offset[0], i + offset[1], 1, 0.0);
+                image.set(j + offset[0], i + offset[1], 2, 0.0);
+                image.set(j, i, 2, 1.0);
+                image.set(j, i, 2, 0.0);
+                image.set(j, i, 2, 0.0);
+            }
+            if (omega.smartAccess(j, i, 1) > 0.3) {
+                image.set(j + offset[0], i + offset[1], 0, 1.0);
+                image.set(j + offset[0], i + offset[1], 1, 0.0);
+                image.set(j + offset[0], i + offset[1], 2, 0.0);
+                image.set(j, i, 2, 1.0);
+            }
+            if (omega.smartAccess(j, i, 2) > 0.3) {
+                image.set(j + offset[0], i + offset[1], 0, 1.0);
+                image.set(j + offset[0], i + offset[1], 1, 0.0);
+                image.set(j + offset[0], i + offset[1], 2, 0.0);
+                image.set(j, i, 2, 1.0);
+                image.set(j, i, 2, 0.0);
+                image.set(j, i, 2, 0.0);
+            }
         }
     }
 
@@ -2344,6 +2380,21 @@ void quickSparseMatrixVerify() {
     cout << endl;
 }
 
+Image naiveCombine(const Image& imageA, const Image& imageB, const Image& omega) {
+    Image results(imageB.cols(), imageB.rows(), 3);
+
+    for (int i = 0; i < imageB.rows(); i++) {
+        for (int j = 0; j < imageB.cols(); j++) {
+            for (int c = 0; c < 3; c++) {
+                if (omega.smartAccess(j, i, c) > 0.1) results.set(j, i, c, imageA.smartAccess(j, i, c));
+                else results.set(j, i, c, imageB.smartAccess(j, i, c));
+            }
+        }
+    }
+
+    return results;
+}
+
 void cellShadeTest() {
     Image imageB(DATA_DIR "/output/faceSwapHealedRight.png");
     Image imageB2(DATA_DIR "/output/faceSwapHealedRight.png");
@@ -2371,11 +2422,17 @@ void cellShadeDemo() {
     offset[0] = 4;
     offset[1] = 25;
 
-    imageA.cellShade(1.0 / 12.0);
+    imageA.cellShade(1.0 / 10.0);
+
+    printGradient(imageA, DATA_DIR "/output/cellShadeGradient.png", 0.5);
+
     // imageB.cellShade(1.0 / 12.0);
 
-    Image swap = seamlessPoissonCloning(imageA, imageB, omega, offset);
-    swap.write(DATA_DIR "/output/cellShadeDemo.png");
+    Image results = seamlessPoissonCloningToon(imageA, imageB, omega, 0.1, offset);
+    results.write(DATA_DIR "/output/cellGradDemoImage.png");
+
+    // Image swap = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    // swap.write(DATA_DIR "/output/cellShadeDemo.png");
 }
 
 void cellShadeDemo2() {
@@ -2391,9 +2448,9 @@ void cellShadeDemo2() {
     offset[0] = 0;
     offset[1] = 0;
 
-    imageA.cellShade(1.0 / 5.0);
+    imageA.cellShade(1.0 / 12.0);
 
-    // edgeDetection(imageA, 0.03).write(DATA_DIR "/output/faceSwapED-0_03.png");
+    edgeDetection(imageA, 0.1).write(DATA_DIR "/output/cellED-0_5.png");
     // edgeDetection(imageA, 0.05).write(DATA_DIR "/output/faceSwapED-0_05.png");
     // edgeDetection(imageA, 0.1).write(DATA_DIR "/output/faceSwapED-0_1.png");
     // edgeDetection(imageA, 0.2).write(DATA_DIR "/output/faceSwapED-0_2.png");
@@ -2422,6 +2479,29 @@ void cellShadeDemo2() {
     results.setZero();
 }
 
+void dogNaive() {
+    Image imageB(DATA_DIR "/input/water.jpg");
+    Image imageA(DATA_DIR "/input/doggo.jpg");
+    Image omega(DATA_DIR "/input/dogweights.png");
+
+    Image dog = naiveCombine(imageA, imageB, omega);
+    dog.write(DATA_DIR "/output/naiveDog.png");
+
+    printGradient(imageA, DATA_DIR "/output/naiveDogGradient.png", 0.5);
+}
+
+void inClassDemo() {
+    Image imageB(DATA_DIR "/input/water.jpg");
+    Image imageA(DATA_DIR "/input/doggo.jpg");
+    Image omega(DATA_DIR "/input/dogweights2.png");
+    Eigen::Vector2i offset;
+    offset[0] = 100;
+    offset[1] = 0;
+
+    Image results = seamlessPoissonCloning(imageA, imageB, omega, offset);
+    results.write(DATA_DIR "/output/doggoInClassDemo.png");
+}
+
 int main(int argc, char* argv[]) {
     // quickSparseMatrixVerify();
     //
@@ -2437,7 +2517,7 @@ int main(int argc, char* argv[]) {
     // std::cout << m << std::endl;
     //
     // inClassExample();
-    //
+    // //
     // twodExample();
     //
     // polarBearExample();
@@ -2457,8 +2537,12 @@ int main(int argc, char* argv[]) {
     // toonShaderDemo();
 
     // cellShadeTest();
-    cellShadeDemo();
-    cellShadeDemo2();
+    // cellShadeDemo();
+    // cellShadeDemo2();
+
+    // dogNaive();
+
+    inClassDemo();
 
     return 0;
 }
